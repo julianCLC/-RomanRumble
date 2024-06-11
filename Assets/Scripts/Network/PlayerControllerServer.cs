@@ -181,8 +181,10 @@ public class PlayerControllerServer : NetworkBehaviour
         pc.AddImpulse(hitImpulse, hit);
     }
 
+    /*
     [Rpc(SendTo.Everyone)]
     public void PlaySoundRPC(string soundName){
         SoundManager.Instance.PlaySound(soundName);
     }
+    */
 }

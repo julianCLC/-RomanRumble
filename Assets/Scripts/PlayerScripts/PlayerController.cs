@@ -205,10 +205,15 @@ public class PlayerController : NetworkBehaviour
                 // use mouse for aiming when on keyboard
                 if(_isKeyboard){
                     ScreenSpaceToWorldSpace();
+                    playerModel.rotation = Quaternion.LookRotation(_moveDirectionMouse, Vector3.up);
+
+                    /*
+                    // don't rotate player model back and forth
                     Vector3 lookAtPoint = _moveDirectionMouse - transform.position;
                     lookAtPoint = new Vector3(lookAtPoint.x, transform.position.y, lookAtPoint.z);
                     playerModel.rotation = Quaternion.LookRotation(lookAtPoint, Vector3.up);
-                    // playerModel.rotation = Quaternion.LookRotation(_moveDirectionMouse, Vector3.up);
+                    */
+                    
                 }
                 else{
                     if(moveDirection.magnitude > 0.01f){
@@ -309,7 +314,7 @@ public class PlayerController : NetworkBehaviour
                 float particleSize = 0.3f;
                 NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.DodgeFX, transform.position, Vector3.up, new Vector3(particleSize, particleSize, particleSize));
             
-                pcserver.PlaySoundRPC("DodgeSFX");
+                NetworkHelperFuncs.Instance.PlaySoundRPC("DodgeSFX");
             }
         }
     }
@@ -424,7 +429,7 @@ public class PlayerController : NetworkBehaviour
             
             
             heldItem.HideItemRpc();
-            pcserver.PlaySoundRPC("ThrowSFX");
+            NetworkHelperFuncs.Instance.PlaySoundRPC("ThrowSFX");
 
             _itemHeld = null;
         }
@@ -434,7 +439,7 @@ public class PlayerController : NetworkBehaviour
         if(_itemHeld != null && !_itemHeld.isItemHeld.Value){
             pcserver.ItemPickupServerRpc(_itemHeld.NetworkObjectId);
             heldItem.ShowItemRpc(_itemHeld.NetworkObjectId);
-            pcserver.PlaySoundRPC("PickupSFX");
+            NetworkHelperFuncs.Instance.PlaySoundRPC("PickupSFX");
         }
         else{
             // invalid pickup

@@ -37,7 +37,6 @@ public class Spear : PickupItem
     protected override void OnHitPlayer(Collision collision, PlayerControllerServer pcServer, NetworkObject playerNetObj)
     {
         base.OnHitPlayer(collision, pcServer, playerNetObj);
-        Debug.Log("hit player");
         if(inFlight){
             EndFlight();
         }
@@ -46,8 +45,6 @@ public class Spear : PickupItem
     protected override void OnHitEnvironment(Collision collision)
     {
         base.OnHitEnvironment(collision);
-
-        Debug.Log("hit environment");
         if(inFlight){
             EndFlight();
         }
@@ -64,11 +61,9 @@ public class Spear : PickupItem
         rb.useGravity = false;
         inFlight = true;
         flightTimer = flightTime * timerPercent; // flytime based on charge
-        Debug.Log("flight time: " + flightTime + " | percent: " + timerPercent + " | current timer: " + flightTimer);
     }
 
     void EndFlight(){
-        Debug.Log("end flight");
         flightTimer = 0;
         inFlight = false;
         rb.useGravity = true;

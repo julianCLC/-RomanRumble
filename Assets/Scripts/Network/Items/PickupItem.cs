@@ -57,18 +57,20 @@ public class PickupItem : NetworkBehaviour
     void OnCollisionEnter(Collision collision){
 
         if(collision.transform.CompareTag("Player") && rb.velocity.magnitude >= 0.5){
+            NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+
             if(collision.transform.TryGetComponent(out PlayerControllerServer pcServer) && collision.transform.TryGetComponent(out NetworkObject playerNetObj)){
                 OnHitPlayer(collision, pcServer, playerNetObj);
             }
             else{
-                // hitting dummies
-                SoundManager.Instance.PlaySound("HitSFX");
+                // hitting dummies 
                 float hitSize = 0.5f;
                 NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.HitFX, collision.contacts[0].point, Vector3.zero, new Vector3(hitSize, hitSize, hitSize));
                 OnHitEnvironment(collision);
             }
         }
         else if(!collision.transform.CompareTag("Player")){
+            NetworkHelperFuncs.Instance.PlaySoundRPC("HitObjectSFX");
             OnHitEnvironment(collision);
         }
         
@@ -82,7 +84,8 @@ public class PickupItem : NetworkBehaviour
 
                 float damageToDeal = clampedHitForce.magnitude / 0.2f;
                 pcServer.DealDamageServer(damageToDeal * GetDamage(itemType), heldByClientId);
-                pcServer.PlaySoundRPC("HitSFX");
+                NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+
                 float hitSize = 0.5f;
                 NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.HitFX, collision.contacts[0].point, Vector3.zero, new Vector3(hitSize, hitSize, hitSize));
 
@@ -90,7 +93,9 @@ public class PickupItem : NetworkBehaviour
             }
     }
 
-    protected virtual void OnHitEnvironment(Collision collision){}
+    protected virtual void OnHitEnvironment(Collision collision){
+        // Debug.Log("hit object");
+    }
 
     public void ServerPickup(ulong clientId){
         if(!IsServer) return;

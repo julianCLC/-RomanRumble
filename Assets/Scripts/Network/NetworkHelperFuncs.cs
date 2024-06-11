@@ -46,4 +46,9 @@ public class NetworkHelperFuncs : NetworkBehaviour
 
         fx.PlayFX(position);
     }
+
+    [Rpc(SendTo.Everyone)]
+    public void PlaySoundRPC(string soundName){
+        SoundManager.Instance.PlaySound(soundName);
+    }
 }
