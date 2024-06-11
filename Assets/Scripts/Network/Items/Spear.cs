@@ -15,7 +15,6 @@ public class Spear : PickupItem
         if(inFlight){
             if(flightTimer > 0){
                 flightTimer -= Time.deltaTime;
-                // transform.up = rb.velocity.normalized;
             }
             else{
                 EndFlight();

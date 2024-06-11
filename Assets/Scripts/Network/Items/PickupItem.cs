@@ -14,7 +14,6 @@ public class PickupItem : NetworkBehaviour
     public MeshFilter meshFilter {get; private set;}
     Collider[] itemColliders;
     protected Rigidbody rb;
-    // private bool isActive = false; // can calculate hits if active
     public NetworkVariable<bool> isItemHeld = new NetworkVariable<bool>();
     private ulong heldByClientId;
 
@@ -93,9 +92,7 @@ public class PickupItem : NetworkBehaviour
             }
     }
 
-    protected virtual void OnHitEnvironment(Collision collision){
-        // Debug.Log("hit object");
-    }
+    protected virtual void OnHitEnvironment(Collision collision){ }
 
     public void ServerPickup(ulong clientId){
         if(!IsServer) return;
@@ -106,7 +103,6 @@ public class PickupItem : NetworkBehaviour
         rb.interpolation = RigidbodyInterpolation.None;
     }
 
-    // public virtual void ServerThrow(Vector3 position, Vector3 itemRotation, Vector3 throwDirection, float chargePercent){
     public virtual void ServerThrow(ThrowInfo throwInfo){
         if(!IsServer) return;
         isItemHeld.Value = false;

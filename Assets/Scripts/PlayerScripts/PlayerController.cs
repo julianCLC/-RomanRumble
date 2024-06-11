@@ -534,11 +534,6 @@ public class PlayerController : NetworkBehaviour
                 }
 
                 _isDead = true;
-
-                // moveImpulse = Vector3.zero;
-                // moveForce = Vector3.zero;
-                // moveDirection = Vector3.zero;
-
                 StartCoroutine(DeathSequence());
             }
             else{

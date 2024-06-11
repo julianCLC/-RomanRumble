@@ -19,18 +19,6 @@ public class NetworkHelperFuncs : NetworkBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     [Rpc(SendTo.Everyone)]
     public void PlayGenericFXRpc(PoolType poolType, Vector3 position, Vector3 forwardDir, Vector3 particleScale = new Vector3()){
         

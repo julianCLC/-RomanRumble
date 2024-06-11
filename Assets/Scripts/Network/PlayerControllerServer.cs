@@ -26,8 +26,6 @@ public class PlayerControllerServer : NetworkBehaviour
 
     public override void OnNetworkSpawn(){
         base.OnNetworkSpawn();
-
-        // onPlayerDeath += PlearDeathReceived;
         
         net_health.OnValueChanged += UpdateHealthUI;
         _healthScript = GetComponent<Health>();
@@ -47,7 +45,6 @@ public class PlayerControllerServer : NetworkBehaviour
     {
         base.OnNetworkDespawn();
 
-        // onPlayerDeath -= PlearDeathReceived;
         net_health.OnValueChanged -= UpdateHealthUI;
         
         if(IsServer){
@@ -180,11 +177,4 @@ public class PlayerControllerServer : NetworkBehaviour
     public void AddImpulseRpc(Vector3 hitImpulse, bool hit, RpcParams rpcParams){
         pc.AddImpulse(hitImpulse, hit);
     }
-
-    /*
-    [Rpc(SendTo.Everyone)]
-    public void PlaySoundRPC(string soundName){
-        SoundManager.Instance.PlaySound(soundName);
-    }
-    */
 }

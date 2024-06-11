@@ -55,7 +55,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    
     public void RemoveWeightFromTargetGroup(ulong playerId){
         Transform playerTransform = GameManager.Instance.playerObjDict[playerId].transform;
         playerList.Remove(playerTransform);
@@ -66,8 +65,6 @@ public class CameraController : MonoBehaviour
         playerList.Add(playerTransform);
     }
     
-
-    // Vector3 GetCenterPoint(){
     (Vector3, float) GetCenterPointAndGreatestDistance(){
         if(playerList.Count == 1){
             return (cameraOrigin.position = playerList[0].position, minZoom);
