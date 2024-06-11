@@ -544,6 +544,7 @@ public class PlayerController : NetworkBehaviour
 
     IEnumerator DeathSequence(){
         yield return new WaitForSeconds(0.5f);
+        playerIndicator.enabled = false;
         HideMesh();
 
         float hitSize = 0.3f;
@@ -565,6 +566,7 @@ public class PlayerController : NetworkBehaviour
 
     void OnPlayerRevive(ulong clientId){
         ShowMesh();
+        playerIndicator.enabled = true;
 
         if(clientId != OwnerClientId) return;
 

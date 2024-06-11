@@ -82,7 +82,7 @@ public class PickupItem : NetworkBehaviour
                 pcServer.AddImpulseRpc(clampedHitForce, true, RpcTarget.Single(playerNetObj.OwnerClientId, RpcTargetUse.Temp));
 
                 float damageToDeal = clampedHitForce.magnitude / 0.2f;
-                pcServer.DealDamageServer(damageToDeal * GetDamage(itemType), heldByClientId);
+                pcServer.DealDamageServer(damageToDeal * ItemUtils.Instance.GetItemStrength(itemType), heldByClientId);
                 NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
 
                 float hitSize = 0.5f;
