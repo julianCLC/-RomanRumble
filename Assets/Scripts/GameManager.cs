@@ -44,7 +44,8 @@ public class GameManager : MonoBehaviour
         
         RoundHandler.onRoundEnd += OnRoundEnd;
         NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerObjects;
-        NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerObjects;
+        // NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerObjects;
+        NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
         PlayerControllerServer.onPlayerDeath += OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive += OnPlayerRevive;
     }
@@ -55,7 +56,8 @@ public class GameManager : MonoBehaviour
 
         RoundHandler.onRoundEnd -= OnRoundEnd;
         NetworkManager.Singleton.OnClientConnectedCallback -= UpdatePlayerObjects;
-        NetworkManager.Singleton.OnClientDisconnectCallback -= UpdatePlayerObjects;
+        NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
+        // NetworkManager.Singleton.OnClientDisconnectCallback -= UpdatePlayerObjects;
         PlayerControllerServer.onPlayerDeath -= OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive -= OnPlayerRevive;
     }
@@ -68,8 +70,14 @@ public class GameManager : MonoBehaviour
         roundStartButton.SetActive(true);
     }
 
+    void DisconnectPlayerObject(ulong clientId){
+        playerObjDict[clientId].GetComponent<NetworkObject>().Despawn();
+        UpdatePlayerObjects(clientId);
+    }
+
     void UpdatePlayerObjects(ulong clientId){
         playerObjects = GameObject.FindGameObjectsWithTag("Player");
+        playerObjDict.Clear();
         foreach(GameObject playerObj in playerObjects){
             if(playerObj.TryGetComponent(out NetworkObject netObj)){
                 playerObjDict[netObj.OwnerClientId] = playerObj;

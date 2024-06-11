@@ -2,6 +2,7 @@ using Cinemachine;
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Collections;
 
 public class CameraController : MonoBehaviour
 {
@@ -19,20 +20,30 @@ public class CameraController : MonoBehaviour
 
     private Vector3 camVelocity;
 
+    bool isActive = false;
+
     void OnEnable(){
-       GameManager.onPlayerObjectsUpdate += UpdateTargetGroup;
-       GameManager.onPlayerDeath += RemoveWeightFromTargetGroup;
-       GameManager.onPlayerRevive += AddWeightFromTargetGroup;
+        GameManager.onPlayerObjectsUpdate += UpdateTargetGroup;
+        GameManager.onPlayerDeath += RemoveWeightFromTargetGroup;
+        GameManager.onPlayerRevive += AddWeightFromTargetGroup;
+
+        NetworkManager.Singleton.OnClientConnectedCallback += OnConnect;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnDisconnect;
+
     }
+    
 
     void OnDisable(){
-       GameManager.onPlayerObjectsUpdate -= UpdateTargetGroup;
-       GameManager.onPlayerDeath -= RemoveWeightFromTargetGroup;
-       GameManager.onPlayerRevive -= AddWeightFromTargetGroup;
+        GameManager.onPlayerObjectsUpdate -= UpdateTargetGroup;
+        GameManager.onPlayerDeath -= RemoveWeightFromTargetGroup;
+        GameManager.onPlayerRevive -= AddWeightFromTargetGroup;
+
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnConnect;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnDisconnect;
     }
 
     void LateUpdate(){
-        if(playerList.Count > 0){
+        if(playerList.Count > 0 && isActive){
             // Camera Follow
             (Vector3 centerPos, float greatestDistance) = GetCenterPointAndGreatestDistance();
             cameraOrigin.position = Vector3.SmoothDamp(cameraOrigin.position, centerPos, ref camVelocity, smoothTime);
@@ -66,17 +77,33 @@ public class CameraController : MonoBehaviour
     }
     
     (Vector3, float) GetCenterPointAndGreatestDistance(){
+        if(playerList.Count <= 0) return (Vector3.zero, minZoom);
         if(playerList.Count == 1){
             return (cameraOrigin.position = playerList[0].position, minZoom);
         }
         
         Bounds bounds = new Bounds(playerList[0].position, Vector3.zero);
         foreach(Transform player in playerList){
+            if(player != null){
             bounds.Encapsulate(player.position);
+
+            }
         }
 
         float newFov = Mathf.Max(bounds.size.x, bounds.size.y);
 
         return (bounds.center, Mathf.Clamp(minZoom + newFov, minZoom, maxZoom));
+    }
+
+    void OnConnect(ulong clientId){
+        if(clientId == NetworkManager.Singleton.LocalClientId){
+            isActive = true;
+        }
+    }
+
+    void OnDisconnect(ulong clientId){
+        if(clientId == NetworkManager.Singleton.LocalClientId){
+            isActive = false;
+        }
     }
 }

@@ -14,6 +14,7 @@ public class NetworkConfiguring : MonoBehaviour
 {
 
     public static event Action<string> onCreateHost;
+    public static event Action onMyClientConnected;
 
     // Start is called before the first frame update
     private async void Start()
@@ -67,5 +68,20 @@ public class NetworkConfiguring : MonoBehaviour
 
     public void StartClient(string joinCode){
         JoinRelay(joinCode);
+    }
+
+    public void DisconnectClient(){
+        Debug.Log("disconnect call");
+        // NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+        // if(!NetworkManager.Singleton.IsServer){
+
+        // }
+        NetworkManager.Singleton.Shutdown();
+    }
+
+    [Rpc(SendTo.Server)]
+    public void DisconnectClientRpc(ulong clientId){
+        //  NetworkManager.Singleton.Dest
+        NetworkManager.Singleton.DisconnectClient(clientId);
     }
 }

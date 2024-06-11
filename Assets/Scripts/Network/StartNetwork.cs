@@ -11,7 +11,8 @@ public class StartNetwork : MonoBehaviour
     [SerializeField] NetworkConfiguring networkConfig;
     [SerializeField] TMP_Text joinCodeText;
     [SerializeField] TMP_InputField inputField;
-    [SerializeField] GameObject NetworkButtons;
+    // [SerializeField] GameObject NetworkButtons;
+    [SerializeField] GameObject[] MainMenuButtons;
 
     void OnEnable(){
         NetworkConfiguring.onCreateHost += SetJoinCode;
@@ -27,7 +28,7 @@ public class StartNetwork : MonoBehaviour
     
     }
 
-    void OnDsiable(){
+    void OnDisable(){
         NetworkConfiguring.onCreateHost -= SetJoinCode;
         NetworkManager.Singleton.OnClientConnectedCallback -= OnConnected;
     }
@@ -39,14 +40,30 @@ public class StartNetwork : MonoBehaviour
     public void StartHost(){
         networkConfig.StartHost();
     }
+
     public void StartServer(){
     }
+
     public void StartClient(){
         networkConfig.StartClient(inputField.text);
     }
 
+    public void DisconnectClient(){
+        networkConfig.DisconnectClient();
+        foreach(GameObject button in MainMenuButtons){
+            button.SetActive(true);
+        }
+    }
+
+    public void QuitGame(){
+        Application.Quit();
+    }
+
     void OnConnected(ulong clientId){
-        NetworkButtons.SetActive(false);
+        // NetworkButtons.SetActive(false);
+        foreach(GameObject button in MainMenuButtons){
+            button.SetActive(false);
+        }
     }
     
 }
