@@ -8,7 +8,6 @@ using UnityEngine.InputSystem;
 public class PlayerController : NetworkBehaviour
 {
     // editor values
-    // [SerializeField] Transform mouseIndicator;
     [SerializeField] float acceleration = 0.05f;
     [SerializeField] float maxSpeed = 0.05f;
     [SerializeField] float jumpStrength = 0.125f;
@@ -56,6 +55,7 @@ public class PlayerController : NetworkBehaviour
     // input
     [SerializeField] PlayerInput playerInput;
     bool _isKeyboard = false;
+    public static Action onPausePressed;
 
     // Mouse to world
     [SerializeField] Camera mainCam; // for cursor position
@@ -400,6 +400,14 @@ public class PlayerController : NetworkBehaviour
             }
         }
     }
+
+    // TODO: Take all inputs out of controller script,
+    // so it can be used by anything in the game.
+    // Potentially use a script with listeners that any
+    // script can subscribe to
+    void OnPause(InputValue value){
+        PauseHandler();
+    }
     
     void OnControlsChanged(){
         if(!IsOwner) return;
@@ -608,6 +616,10 @@ public class PlayerController : NetworkBehaviour
         else{
             debug_mouseIndicator.gameObject.SetActive(false);
         }
+    }
+
+    void PauseHandler(){
+        onPausePressed?.Invoke();
     }
 
     #endregion
