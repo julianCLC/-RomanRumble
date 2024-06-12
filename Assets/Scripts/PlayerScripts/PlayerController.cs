@@ -573,12 +573,16 @@ public class PlayerController : NetworkBehaviour
     }
 
     void OnPlayerRevive(ulong clientId){
-        ShowMesh();
-        playerIndicator.enabled = true;
+        if(clientId == OwnerClientId){
+            ShowMesh();
 
-        if(clientId != OwnerClientId) return;
+            if(clientId == NetworkManager.Singleton.LocalClientId){
+                Debug.Log("client that died: " + clientId + " | my client ID: " + NetworkManager.Singleton.LocalClientId);
+                playerIndicator.enabled = true;
 
-        _isDead = false;
+                _isDead = false;
+            }
+        }
     }
 
     public void HideMesh(){
