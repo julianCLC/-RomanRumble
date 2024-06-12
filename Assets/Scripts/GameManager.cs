@@ -18,6 +18,10 @@ public class GameManager : MonoBehaviour
     public static Action<ulong> onPlayerDeath;
     public static Action<ulong> onPlayerRevive;
 
+    // Use these to let other clients know of connection/disconnection
+    public static Action<ulong> onManualClientConnected;
+    public static Action<ulong> onManualClientDisconnected;
+
     public static GameManager Instance { get; private set; }
 
     Color[] colorList = {Color.blue, Color.red, Color.green, Color.yellow, Color.black, Color.white};
@@ -43,9 +47,11 @@ public class GameManager : MonoBehaviour
         playerObjDict = new Dictionary<ulong, GameObject>();
         
         RoundHandler.onRoundEnd += OnRoundEnd;
-        NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerObjects;
+        // NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerObjects;
+        // NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectRpc;
         // NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerObjects;
-        NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
+        // NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
+        // NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectRpc;
         PlayerControllerServer.onPlayerDeath += OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive += OnPlayerRevive;
     }
@@ -55,8 +61,10 @@ public class GameManager : MonoBehaviour
         playerObjDict.Clear();
 
         RoundHandler.onRoundEnd -= OnRoundEnd;
-        NetworkManager.Singleton.OnClientConnectedCallback -= UpdatePlayerObjects;
-        NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
+        // NetworkManager.Singleton.OnClientConnectedCallback -= UpdatePlayerObjects;
+        // NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectRpc;
+        // NetworkManager.Singleton.OnClientDisconnectCallback -= DisconnectPlayerObject;
+        // NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectRpc;
         // NetworkManager.Singleton.OnClientDisconnectCallback -= UpdatePlayerObjects;
         PlayerControllerServer.onPlayerDeath -= OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive -= OnPlayerRevive;
@@ -71,11 +79,14 @@ public class GameManager : MonoBehaviour
     }
 
     void DisconnectPlayerObject(ulong clientId){
-        playerObjDict[clientId].GetComponent<NetworkObject>().Despawn();
+        if(NetworkManager.Singleton.IsServer){
+            playerObjDict[clientId].GetComponent<NetworkObject>().Despawn();
+        }
         UpdatePlayerObjects(clientId);
     }
 
     void UpdatePlayerObjects(ulong clientId){
+        Debug.Log("UpdatePlayerObjects()");
         playerObjects = GameObject.FindGameObjectsWithTag("Player");
         playerObjDict.Clear();
         foreach(GameObject playerObj in playerObjects){
@@ -84,7 +95,7 @@ public class GameManager : MonoBehaviour
             }
             // playerObjDict[playerObj.GetComponent<NetworkObject>().OwnerClientId] = playerObj;
         }
-        
+        Debug.Log("UpdatePlayerObjects() object count: " + playerObjects.Length);
         onPlayerObjectsUpdate?.Invoke(clientId);
     }
 
@@ -125,4 +136,17 @@ public class GameManager : MonoBehaviour
     public Color GetColour(ulong clientId){
         return colorList[clientId];
     }
+
+    public void OnClientConnect(ulong clientId){
+        UpdatePlayerObjects(clientId);
+        // onPlayerObjectsUpdate?.Invoke(clientId);
+    }
+
+    public void OnClientDisconnect(ulong clientId){
+        Debug.Log("Client Disconnected!");
+        DisconnectPlayerObject(clientId);
+        // UpdatePlayerObjects(clientId);
+        // onPlayerObjectsUpdate?.Invoke(clientId);
+    }
+
 }

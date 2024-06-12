@@ -41,26 +41,19 @@ public class PlayerUIGroup : MonoBehaviour
     }
 
     void SetPlayerUIHandlers(ulong newPlayerId){
-
+        Debug.Log("SetPlayerUIHandlers()");
         ResetUIHandlers();
 
         foreach(GameObject playerObj in GameManager.Instance.playerObjects){
-            Debug.Log("setting");
             GameObject newHandler = Instantiate(uiHandlerPrefab);
             newHandler.transform.SetParent(transform);
             
             PlayerUIHandler playerUIHandler = newHandler.GetComponent<PlayerUIHandler>();
-            
-            // PlayerControllerServer pcServer = playerObj.GetComponent<PlayerControllerServer>();
 
             if(playerObj.TryGetComponent(out PlayerControllerServer pcServer)){
                 UIHandlers.Add(pcServer.OwnerClientId, playerUIHandler);
                 playerUIHandler.InitializeUI(pcServer.OwnerClientId);
             }
-
-            // UIHandlers.Add(pcServer.OwnerClientId, playerUIHandler);
-
-            // playerUIHandler.InitializeUI(pcServer.OwnerClientId);
         }
 
         UIActive = true;
@@ -69,6 +62,7 @@ public class PlayerUIGroup : MonoBehaviour
     void ResetUIHandlers(){
         UIHandlers.Clear();
         foreach(Transform uiObj in transform){
+            Debug.Log("deleting");
             Destroy(uiObj.gameObject);
         }
     }

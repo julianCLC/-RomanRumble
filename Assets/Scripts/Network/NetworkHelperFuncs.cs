@@ -19,6 +19,27 @@ public class NetworkHelperFuncs : NetworkBehaviour
         }
     }
 
+    void OnEnable(){
+        
+        // StartNetwork.onNetworkSubScribed += DelaySubscribe;
+        StartNetwork.onStartAsHost += DelaySubscribe;
+        
+    }
+
+
+    void DelaySubscribe(){
+        Debug.Log("Delay Subscribe");
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectRpc;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectRpc;
+
+    }
+
+    void OnDisable(){
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectRpc;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectRpc;
+        
+    }
+
     [Rpc(SendTo.Everyone)]
     public void PlayGenericFXRpc(PoolType poolType, Vector3 position, Vector3 forwardDir, Vector3 particleScale = new Vector3()){
         
@@ -38,5 +59,16 @@ public class NetworkHelperFuncs : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     public void PlaySoundRPC(string soundName){
         SoundManager.Instance.PlaySound(soundName);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void OnClientConnectRpc(ulong clientId){
+        Debug.Log("Client Connected!");
+        GameManager.Instance.OnClientConnect(clientId);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void OnClientDisconnectRpc(ulong clientId){
+        GameManager.Instance.OnClientDisconnect(clientId);
     }
 }

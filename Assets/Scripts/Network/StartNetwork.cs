@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using Unity.Netcode;
@@ -14,8 +15,11 @@ public class StartNetwork : MonoBehaviour
     // [SerializeField] GameObject NetworkButtons;
     [SerializeField] GameObject[] MainMenuButtons;
 
+    // public static Action onNetworkSubScribed;
+    public static Action onStartAsHost;
+
     void OnEnable(){
-        NetworkConfiguring.onCreateHost += SetJoinCode;
+        NetworkConfiguring.onCreateHost += HostConfigure;
         StartCoroutine(SubscribeToNetworkManagerEvents());
     }
 
@@ -23,16 +27,22 @@ public class StartNetwork : MonoBehaviour
     IEnumerator SubscribeToNetworkManagerEvents(){
         yield return new WaitUntil(() => NetworkManager.Singleton);
         NetworkManager.Singleton.OnClientConnectedCallback += OnConnected;
-
+        // onNetworkSubScribed?.Invoke();
         Debug.Log("Subscribed to NetworkManager");
     
     }
 
     void OnDisable(){
-        NetworkConfiguring.onCreateHost -= SetJoinCode;
+        NetworkConfiguring.onCreateHost -= HostConfigure;
         NetworkManager.Singleton.OnClientConnectedCallback -= OnConnected;
     }
 
+    void HostConfigure(string joinCode){
+
+
+        SetJoinCode(joinCode);
+        onStartAsHost?.Invoke();
+    }
     void SetJoinCode(string joinCode){
         joinCodeText.text = "Join Code: " + joinCode;
     }

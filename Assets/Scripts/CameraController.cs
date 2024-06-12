@@ -96,6 +96,7 @@ public class CameraController : MonoBehaviour
     }
 
     void OnConnect(ulong clientId){
+        Debug.Log("OnConnect()");
         if(clientId == NetworkManager.Singleton.LocalClientId){
             isActive = true;
         }
