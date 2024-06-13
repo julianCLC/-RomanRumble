@@ -161,8 +161,6 @@ public class PlayerController : NetworkBehaviour
         Movement();
         ModelRotation();
         ImpulseMovement();
-
-        
     }
 
     void FixedUpdate(){
@@ -197,9 +195,7 @@ public class PlayerController : NetworkBehaviour
     /// Handles model rotation for all states
     /// </summary>
     void ModelRotation(){
-        // 
         if(currState == MoveState.Idle | currState == MoveState.Run | currState == MoveState.Jump | currState == MoveState.Charging){
-        // if(currState != MoveState.CrouchStart && currState != MoveState.Dodge && !inAction){
             if(_isCharging){
                 // use mouse for aiming when on keyboard
                 if(_isKeyboard){
@@ -219,7 +215,6 @@ public class PlayerController : NetworkBehaviour
                         playerModel.rotation = Quaternion.LookRotation(moveDirection, Vector3.up);
                     }
                 }
-
             }
             else if(moveDirection.magnitude > 0){
                 playerModel.rotation = Quaternion.Lerp(playerModel.rotation, Quaternion.LookRotation(moveDirection, Vector3.up), Time.deltaTime * 10f);
@@ -544,6 +539,8 @@ public class PlayerController : NetworkBehaviour
                     ReversePipckup();
                 }
 
+                if(_isCharging){ _isCharging = false; }
+
                 _isDead = true;
                 StartCoroutine(DeathSequence());
             }
@@ -565,9 +562,7 @@ public class PlayerController : NetworkBehaviour
         moveForce = Vector3.zero;
         moveDirection = Vector3.zero;
 
-        characterController.enabled = false;
-        transform.position = GameManager.GetRandomPositionArena();
-        characterController.enabled = true;
+        if(_isCrouching){ _isCrouching = false; }
     }
 
     public IEnumerator OtherPlayerDeathSequence(){
@@ -577,6 +572,10 @@ public class PlayerController : NetworkBehaviour
 
     void OnPlayerRevive(ulong clientId){
         if(clientId == OwnerClientId){
+            characterController.enabled = false;
+            transform.position = GameManager.GetRandomPositionArena();
+            characterController.enabled = true;
+
             ShowMesh();
 
             if(clientId == NetworkManager.Singleton.LocalClientId){
