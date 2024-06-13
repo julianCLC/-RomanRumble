@@ -157,7 +157,6 @@ public class PlayerController : NetworkBehaviour
             Debugging();
         }
 
-        if(_isDead) return;
         GroundCheck();
         Movement();
         ModelRotation();
@@ -180,7 +179,7 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     void Movement(){
         // Set Movement
-        if(currState == MoveState.Idle | currState == MoveState.Run | currState == MoveState.Jump){
+        if((currState == MoveState.Idle || currState == MoveState.Run || currState == MoveState.Jump) && !_isDead){
             moveForce += moveDirection * GetSpeed() * Time.deltaTime;
         }
 
@@ -296,7 +295,7 @@ public class PlayerController : NetworkBehaviour
     }
 
     void JumpHandler(){
-        if(_isGrounded){
+        if(_isGrounded && !_isDead){
             if(!_isCrouching && !_inAction){
                 // regular vertical jump
                 moveImpulse = new Vector3(moveImpulse.x, jumpStrength , moveImpulse.z);
@@ -320,51 +319,55 @@ public class PlayerController : NetworkBehaviour
     }
 
     void CrouchHandler(bool crouchPressed){
-        if(!_isHolding){
+        if(!_isHolding && !_isDead){
             _isCrouching = crouchPressed;
         }
     }
 
     void OnFireDown(){
         // Pickup Item
-        if(!_isHolding && (currState == MoveState.Idle || currState == MoveState.Run)){
-            // check if in range of something
-            Collider[] hitColliders = Physics.OverlapBox(pickupArea.position, pickupArea.localScale/2f, Quaternion.identity, pickupMask, QueryTriggerInteraction.Ignore);
-            if(hitColliders.Length > 0){
-                float minDist = Mathf.Infinity;
+        if(!_isDead){
+            if(!_isHolding && (currState == MoveState.Idle || currState == MoveState.Run)){
+                // check if in range of something
+                Collider[] hitColliders = Physics.OverlapBox(pickupArea.position, pickupArea.localScale/2f, Quaternion.identity, pickupMask, QueryTriggerInteraction.Ignore);
+                if(hitColliders.Length > 0){
+                    float minDist = Mathf.Infinity;
 
-                // get closest item            
-                foreach(Collider collider in hitColliders){
-                    float dist = Vector3.Distance(collider.transform.position, transform.position);
-                    if(dist < minDist){
-                        minDist = dist;
-                        _itemHeld = collider.transform.GetComponent<PickupItem>();
-                        
+                    // get closest item            
+                    foreach(Collider collider in hitColliders){
+                        float dist = Vector3.Distance(collider.transform.position, transform.position);
+                        if(dist < minDist){
+                            minDist = dist;
+                            _itemHeld = collider.transform.GetComponent<PickupItem>();
+                            
+                        }
+                    }
+                    
+                    if(_itemHeld != null){
+                        _isHolding = true; 
+                        ChangeCurrentState(MoveState.Pickup, 0.333f);
                     }
                 }
-                
-                if(_itemHeld != null){
-                    _isHolding = true; 
-                    ChangeCurrentState(MoveState.Pickup, 0.333f);
-                }
             }
-        }
-        // Start Charging Throw
-        else if(_isHolding){
-            _chargeTimer = 0;
-            ChangeCurrentState(MoveState.Charging);
-            _isCharging = true;
+            // Start Charging Throw
+            else if(_isHolding){
+                _chargeTimer = 0;
+                ChangeCurrentState(MoveState.Charging);
+                _isCharging = true;
+            }
         }
     }
 
     void OnFireUp(){
         // Release Throw Charge
-        if(_isCharging){
-            _isHolding = false;
-            _isCharging = false;
-            
-            // Play animation
-            ChangeCurrentState(MoveState.Throw, 0.333f);
+        if(!_isDead){
+            if(_isCharging){
+                _isHolding = false;
+                _isCharging = false;
+                
+                // Play animation
+                ChangeCurrentState(MoveState.Throw, 0.333f);
+            }
         }
     }
 
