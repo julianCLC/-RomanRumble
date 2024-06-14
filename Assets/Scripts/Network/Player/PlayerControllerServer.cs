@@ -114,10 +114,12 @@ public class PlayerControllerServer : NetworkBehaviour
     /// <param name="damage"></param>
     public void DealDamageServer(float damage, ulong hitByClientId){
         if(_healthScript != null){
-            _healthScript.TakeDamage(damage);
-            net_health.Value = _healthScript.health;
+            if(!_healthScript.dead){
+                _healthScript.TakeDamage(damage);
+                net_health.Value = _healthScript.health;
 
-            lastHitPlayerId = hitByClientId;
+                lastHitPlayerId = hitByClientId;
+            }
         }
     }
 
@@ -165,6 +167,11 @@ public class PlayerControllerServer : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void OnPlayerReviveClientRpc(){
         onPlayerRevive?.Invoke(transform);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void ShowMeshRpc(){
+        pc.ShowMesh();
     }
 
     /// <summary>

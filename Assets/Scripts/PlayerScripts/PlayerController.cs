@@ -230,8 +230,10 @@ public class PlayerController : NetworkBehaviour
     void ImpulseMovement(){
         if(!_isGrounded){
             // save and apply y force
+
             float gravityForce = moveImpulse.y;
             gravityForce += GRAVITY * Time.deltaTime;
+            
 
             // decay impluse 
             Vector3 newImpulse = -moveImpulse * airImpulseDecay; // less decay in air
@@ -563,6 +565,7 @@ public class PlayerController : NetworkBehaviour
         moveDirection = Vector3.zero;
 
         if(_isCrouching){ _isCrouching = false; }
+        
     }
 
     public IEnumerator OtherPlayerDeathSequence(){
@@ -572,19 +575,28 @@ public class PlayerController : NetworkBehaviour
 
     void OnPlayerRevive(ulong clientId){
         if(clientId == OwnerClientId){
-            characterController.enabled = false;
-            transform.position = GameManager.GetRandomPositionArena();
-            characterController.enabled = true;
-
-            ShowMesh();
 
             if(clientId == NetworkManager.Singleton.LocalClientId){
-                Debug.Log("client that died: " + clientId + " | my client ID: " + NetworkManager.Singleton.LocalClientId);
-                playerIndicator.enabled = true;
-
-                _isDead = false;
+                StartCoroutine(ReviveSequence(clientId));
             }
+
+            Debug.Log("client that died: " + clientId + " | my client ID: " + NetworkManager.Singleton.LocalClientId);
         }
+    }
+
+    IEnumerator ReviveSequence(ulong clientId){
+        characterController.enabled = false;
+        transform.position = GameManager.GetRandomPositionArena();
+        characterController.enabled = true;
+
+        yield return new WaitForSeconds(0.1f);
+
+        // syncronize move and showmesh for other clients
+        pcserver.ShowMeshRpc();
+
+        playerIndicator.enabled = true;
+
+        _isDead = false;
     }
 
     public void HideMesh(){
