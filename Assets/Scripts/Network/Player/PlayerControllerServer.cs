@@ -65,7 +65,8 @@ public class PlayerControllerServer : NetworkBehaviour
 
     void Update(){
         if(transform.position.y < -10f){
-            OnPlayerDeathServer();
+            // OnPlayerDeathServer();
+            DealDamageServer(9999f, lastHitPlayerId);
         }
     }
 
