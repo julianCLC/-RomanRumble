@@ -59,7 +59,7 @@ public class PlayerControllerServer : NetworkBehaviour
 
     void SetupHealth(){
         // TODO: Figure out where to set this health and do client/server consolidation
-        _healthScript.InitializeHealth(3f);
+        _healthScript.InitializeHealth(10f);
         net_health.Value = _healthScript.health;
     }
 
@@ -115,8 +115,12 @@ public class PlayerControllerServer : NetworkBehaviour
     public void DealDamageServer(float damage, ulong hitByClientId){
         if(_healthScript != null){
             if(!_healthScript.dead){
+                Debug.Log("health before damage: " + _healthScript.health);
                 _healthScript.TakeDamage(damage);
                 net_health.Value = _healthScript.health;
+
+                Debug.Log("dealing damage to health: " + damage);
+                Debug.Log("health after damage: " + _healthScript.health);
 
                 lastHitPlayerId = hitByClientId;
             }

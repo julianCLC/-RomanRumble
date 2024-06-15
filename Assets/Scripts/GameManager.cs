@@ -121,12 +121,10 @@ public class GameManager : MonoBehaviour
 
     void OnPlayerDeath(Transform player){
         onPlayerDeath?.Invoke(player.GetComponent<NetworkObject>().OwnerClientId);
-        // onPlayerDeath?.Invoke(player);
     }
 
     void OnPlayerRevive(Transform player){
         onPlayerRevive?.Invoke(player.GetComponent<NetworkObject>().OwnerClientId);
-        // onPlayerRevive?.Invoke(player);
     }
 
     public static Vector3 GetRandomPositionArena(){
@@ -139,14 +137,12 @@ public class GameManager : MonoBehaviour
 
     public void OnClientConnect(ulong clientId){
         UpdatePlayerObjects(clientId);
-        // onPlayerObjectsUpdate?.Invoke(clientId);
     }
 
     public void OnClientDisconnect(ulong clientId){
         Debug.Log("Client Disconnected!");
         DisconnectPlayerObject(clientId);
-        // UpdatePlayerObjects(clientId);
-        // onPlayerObjectsUpdate?.Invoke(clientId);
+
     }
 
 }

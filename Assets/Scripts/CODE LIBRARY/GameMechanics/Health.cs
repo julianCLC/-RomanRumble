@@ -26,10 +26,11 @@ public class Health : MonoBehaviour
     public float TakeDamage(float damage){
         // applies damage to health
         // returns extra damage if amount is larger than current health
+        Debug.Log("healthScript() taking damage: " + damage);
         float overkill = 0;
         health -= damage;
-        if(health <= damage){
-            overkill = damage - overkill;
+        if(health <= 0){
+            overkill = -health;
             Death();
         }
 

@@ -8,7 +8,6 @@ using UnityEngine;
 public class PickupItem : NetworkBehaviour
 {
     public GameObject spawnerPrefab;
-    [SerializeField] float rockDamage, bombDamage, spearDamage;
     [SerializeField] public ItemType itemType;
     public MeshRenderer meshRenderer {get; private set;}
     public MeshFilter meshFilter {get; private set;}
@@ -16,6 +15,9 @@ public class PickupItem : NetworkBehaviour
     protected Rigidbody rb;
     public NetworkVariable<bool> isItemHeld = new NetworkVariable<bool>();
     private ulong heldByClientId;
+
+    float currentDamage;
+    float throwCharge;
 
     void Awake(){
         itemColliders = GetComponents<Collider>();
@@ -47,7 +49,6 @@ public class PickupItem : NetworkBehaviour
         }
     }
 
-
     /// <summary>
     /// Collision detection only happens on server version
     /// Collision effects then get sent to the client that got hit
@@ -55,41 +56,48 @@ public class PickupItem : NetworkBehaviour
     /// <param name="collision"></param>
     void OnCollisionEnter(Collision collision){
 
-        if(collision.transform.CompareTag("Player") && rb.velocity.magnitude >= 0.5){
-            NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+        if(collision.transform.CompareTag("Player") && collision.impulse.magnitude > 1.8f){
 
             if(collision.transform.TryGetComponent(out PlayerControllerServer pcServer) && collision.transform.TryGetComponent(out NetworkObject playerNetObj)){
                 OnHitPlayer(collision, pcServer, playerNetObj);
             }
             else{
                 // hitting dummies 
-                float hitSize = 0.5f;
-                NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.HitFX, collision.contacts[0].point, Vector3.zero, new Vector3(hitSize, hitSize, hitSize));
                 OnHitEnvironment(collision);
             }
+
+            // hit sounds and vfx
+            float hitSize = 0.5f;
+            NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+            NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.HitFX, collision.contacts[0].point, Vector3.zero, new Vector3(hitSize, hitSize, hitSize));
         }
         else if(!collision.transform.CompareTag("Player")){
             NetworkHelperFuncs.Instance.PlaySoundRPC("HitObjectSFX");
             OnHitEnvironment(collision);
         }
+
+        // reduce damage
+        currentDamage = currentDamage/2f;
         
     }
 
     protected virtual void OnHitPlayer(Collision collision, PlayerControllerServer pcServer, NetworkObject playerNetObj){
+
+        // which direction to push the player that got hit
         Vector3 hitImpulse = -collision.GetContact(0).normal;
-            if(hitImpulse.magnitude > 0.01){
-                Vector3 clampedHitForce = Vector3.ClampMagnitude(hitImpulse, .2f);
-                pcServer.AddImpulseRpc(clampedHitForce, true, RpcTarget.Single(playerNetObj.OwnerClientId, RpcTargetUse.Temp));
 
-                float damageToDeal = clampedHitForce.magnitude / 0.2f;
-                pcServer.DealDamageServer(damageToDeal * ItemUtils.Instance.GetItemStrength(itemType), heldByClientId);
-                NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+        Vector3 clampedHitForce = Vector3.ClampMagnitude(hitImpulse, .2f);
+        pcServer.AddImpulseRpc(clampedHitForce, true, RpcTarget.Single(playerNetObj.OwnerClientId, RpcTargetUse.Temp));
 
-                float hitSize = 0.5f;
-                NetworkHelperFuncs.Instance.PlayGenericFXRpc(PoolType.HitFX, collision.contacts[0].point, Vector3.zero, new Vector3(hitSize, hitSize, hitSize));
+        // float damageToDeal = clampedHitForce.magnitude / 0.2f;
 
-                ArrowGenerator.Instance.GenerateArrow(collision.GetContact(0).point, hitImpulse);
-            }
+        // float damageToDeal = currentDamage;
+        Debug.Log(itemType + " dealt damage: " + currentDamage);
+        pcServer.DealDamageServer(currentDamage, heldByClientId);
+        NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
+
+        // Debugging: Create a transform pointing in the direction of the hitImpulse
+        // ArrowGenerator.Instance.GenerateArrow(collision.GetContact(0).point, hitImpulse);
     }
 
     protected virtual void OnHitEnvironment(Collision collision){ }
@@ -112,20 +120,7 @@ public class PickupItem : NetworkBehaviour
 
         rb.position = throwInfo.origin;
         rb.rotation = throwInfo.rot;
-    }
 
-    float GetDamage(ItemType itemType){
-        switch(itemType){
-            case ItemType.Rock:
-                return rockDamage;
-
-            case ItemType.Bomb:
-                return bombDamage;
-
-            case ItemType.Spear:
-                return spearDamage;
-        }
-
-        return 0;
+        currentDamage = ItemUtils.Instance.GetItemStrength(itemType) * throwInfo.chargePercent;
     }
 }
