@@ -407,6 +407,7 @@ public class PlayerController : NetworkBehaviour
     // script can subscribe to
     void OnPause(InputValue value){
         PauseHandler();
+        Time.timeScale = 0;
     }
     
     void OnControlsChanged(){

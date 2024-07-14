@@ -22,6 +22,10 @@ public class PlayerUIHandler : MonoBehaviour
         sliderFill.color = color;
     }
 
+    public void SetName(string _name){
+        playerName.text = _name;
+    }
+
     public void UpdateScore(int newScore){
         score.text = "Score: " + newScore;
     }

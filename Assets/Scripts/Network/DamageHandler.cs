@@ -5,17 +5,9 @@ using UnityEngine;
 
 public class DamageHandler : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    // TODO: Store all info of a hit event here.
+    // Also Use this to store damage from different sources.
+    // If damage source is player, store the info here
 }
 
 public struct DamageInfo : INetworkSerializable

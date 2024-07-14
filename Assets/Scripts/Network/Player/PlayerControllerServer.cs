@@ -115,13 +115,8 @@ public class PlayerControllerServer : NetworkBehaviour
     public void DealDamageServer(float damage, ulong hitByClientId){
         if(_healthScript != null){
             if(!_healthScript.dead){
-                Debug.Log("health before damage: " + _healthScript.health);
                 _healthScript.TakeDamage(damage);
                 net_health.Value = _healthScript.health;
-
-                Debug.Log("dealing damage to health: " + damage);
-                Debug.Log("health after damage: " + _healthScript.health);
-
                 lastHitPlayerId = hitByClientId;
             }
         }

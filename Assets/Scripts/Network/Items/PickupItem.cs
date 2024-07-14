@@ -9,8 +9,8 @@ public class PickupItem : NetworkBehaviour
 {
     public GameObject spawnerPrefab;
     [SerializeField] public ItemType itemType;
-    public MeshRenderer meshRenderer {get; private set;}
-    public MeshFilter meshFilter {get; private set;}
+    public virtual MeshRenderer meshRenderer {get; private set;}
+    public virtual MeshFilter meshFilter {get; private set;}
     Collider[] itemColliders;
     protected Rigidbody rb;
     public NetworkVariable<bool> isItemHeld = new NetworkVariable<bool>();
@@ -19,7 +19,7 @@ public class PickupItem : NetworkBehaviour
     float currentDamage;
     float throwCharge;
 
-    void Awake(){
+    protected virtual void Awake(){
         itemColliders = GetComponents<Collider>();
         rb = GetComponent<Rigidbody>();
 
@@ -89,10 +89,6 @@ public class PickupItem : NetworkBehaviour
         Vector3 clampedHitForce = Vector3.ClampMagnitude(hitImpulse, .2f);
         pcServer.AddImpulseRpc(clampedHitForce, true, RpcTarget.Single(playerNetObj.OwnerClientId, RpcTargetUse.Temp));
 
-        // float damageToDeal = clampedHitForce.magnitude / 0.2f;
-
-        // float damageToDeal = currentDamage;
-        Debug.Log(itemType + " dealt damage: " + currentDamage);
         pcServer.DealDamageServer(currentDamage, heldByClientId);
         NetworkHelperFuncs.Instance.PlaySoundRPC("HitSFX");
 
