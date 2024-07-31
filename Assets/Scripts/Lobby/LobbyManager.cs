@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TreeEditor;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class LobbyManager : MonoBehaviour
@@ -10,8 +12,8 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] GameObject playerSlotParent;
     [SerializeField] GameObject playerSlotPrefab;
 
-    Dictionary<ulong, GameObject> playerSlotDict = new Dictionary<ulong, GameObject>();
-    Dictionary<ulong, bool> playerSlotReadyState = new Dictionary<ulong, bool>();
+    Dictionary<ulong, GameObject> playerSlotGODict = new Dictionary<ulong, GameObject>();
+    public Dictionary<ulong, bool> playerSlotReadyState {get; private set;}
 
     public static LobbyManager Instance {get; private set;}
 
@@ -41,21 +43,33 @@ public class LobbyManager : MonoBehaviour
 
     void OnJoinSession(){
         Debug.Log("isServer: " + NetworkHelperFuncs.Instance.CheckIfServer());
+
         if(!NetworkHelperFuncs.Instance.CheckIfServer()){
             startGameButton.SetActive(false);
         }
+        else{
+            startGameButton.SetActive(true);
+            if(playerSlotReadyState == null){
+                playerSlotReadyState = new Dictionary<ulong, bool>();
+            }
+            else{
+                playerSlotReadyState.Clear();
+            }
+
+        }
+
         InitializePlayerSlots();
     }
 
 
     void OnLeaveSession(){
         Debug.Log("LobbyManager.cs | OnLeaveSession");
-        var playerSlotGOs = playerSlotDict.Values;
+        var playerSlotGOs = playerSlotGODict.Values;
         foreach(GameObject playerSlotGO in playerSlotGOs){
             Destroy(playerSlotGO);
         }
 
-        playerSlotDict.Clear();
+        playerSlotGODict.Clear();
     }
 
     void AddLobbyPlayerSlot(ulong playerId){
@@ -64,28 +78,51 @@ public class LobbyManager : MonoBehaviour
         newHandler.transform.SetParent(playerSlotParent.transform);
 
         // Add to dict
-        playerSlotDict.Add(playerId, newHandler);
+        playerSlotGODict.Add(playerId, newHandler);
 
         // Configure playerUI
         LobbyPlayerSlot playerUI = newHandler.GetComponent<LobbyPlayerSlot>();
         playerUI.Initialize(playerId == NetworkManager.Singleton.LocalClientId);
+
+        // keep track of ready states as server
+        if(!NetworkManager.Singleton.IsServer) return;
+
+        playerSlotReadyState.Add(playerId, false);
     }
 
     void RemoveLobbyPlayerSLot(ulong playerId){
         Debug.Log("Remove player slot call");
-        GameObject playerSlotGO = playerSlotDict[playerId];
+        GameObject playerSlotGO = playerSlotGODict[playerId];
         Destroy(playerSlotGO);
-        playerSlotDict.Remove(playerId);
+        playerSlotGODict.Remove(playerId);
+
+        if(!NetworkManager.Singleton.IsServer) return;
+        playerSlotReadyState.Remove(playerId);
     }
 
     void InitializePlayerSlots(ulong playerId = 0){
         foreach( ulong id in GameManager.Instance.connectedPlayers){
             AddLobbyPlayerSlot(id);
         }
+
+        // Get current ready states of players from server
+        if(!NetworkManager.Singleton.IsServer){
+            NetworkHelperFuncs.Instance.LobbyGetCurrentReadyStatesRpc();
+        }
     }
 
+    // Save player on server
+    public void ServerSetPlayerReadyState(ReadyInfo _info){
+        if(!NetworkManager.Singleton.IsServer) return;
+        
+        playerSlotReadyState[_info.playerId] = _info.readyState;
+
+        NetworkHelperFuncs.Instance.LobbyUpdatePlayerReadyRpc(_info);
+    }
+
+    // Set player ready state locally
     public void ConfigurePlayerSlot(ReadyInfo _info){
-        if(playerSlotDict[_info.playerId].TryGetComponent(out LobbyPlayerSlot playerSlot)){
+        if(playerSlotGODict[_info.playerId].TryGetComponent(out LobbyPlayerSlot playerSlot)){
             playerSlot.SetReadyState(_info.readyState);
         }
     }
@@ -99,5 +136,16 @@ public struct ReadyInfo : INetworkSerializable {
     {
         serializer.SerializeValue(ref playerId);
         serializer.SerializeValue(ref readyState);
+    }
+}
+
+public struct ReadyInfoAll : INetworkSerializable {
+    public ulong[] _keys;
+    public bool[] _values;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref _keys);
+        serializer.SerializeValue(ref _values);
     }
 }

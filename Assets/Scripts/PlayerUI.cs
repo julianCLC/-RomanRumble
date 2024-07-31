@@ -25,7 +25,7 @@ public class PlayerUI : MonoBehaviour
         UpdateHealth(1);
 
         // Change colour based on id
-        Color color = GameManager.Instance.GetColour(playerID);
+        Color color = GameManager.Instance.GetColour(playerID%4);
         playerName.color = color;
         sliderFill.color = color;
     }

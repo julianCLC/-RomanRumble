@@ -39,7 +39,7 @@ public class LobbyPlayerSlot : MonoBehaviour
     void ToggleReady(){
         isReady = !isReady;
         // call rpc
-        NetworkHelperFuncs.Instance.LobbySetReadyStateRpc(new ReadyInfo{
+        NetworkHelperFuncs.Instance.LobbySendReadyStateRpc(new ReadyInfo{
             playerId = NetworkManager.Singleton.LocalClientId,
             readyState = isReady
         });

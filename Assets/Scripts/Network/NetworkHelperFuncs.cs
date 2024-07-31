@@ -125,8 +125,36 @@ public class NetworkHelperFuncs : NetworkBehaviour
         onGameStart?.Invoke();
     }
 
+    // Let server know my ready state
+    [Rpc(SendTo.Server)]
+    public void LobbySendReadyStateRpc(ReadyInfo _info){
+        // LobbyManager.Instance.ConfigurePlayerSlot(_info);
+        LobbyManager.Instance.ServerSetPlayerReadyState(_info);
+    }
+
+    // Change ready state for all clients
     [Rpc(SendTo.Everyone)]
-    public void LobbySetReadyStateRpc(ReadyInfo _info){
+    public void LobbyUpdatePlayerReadyRpc(ReadyInfo _info){
+        LobbyManager.Instance.ConfigurePlayerSlot(_info);
+    }
+
+    // Request to update my version of players ready states
+    [Rpc(SendTo.Server)]
+    public void LobbyGetCurrentReadyStatesRpc(RpcParams rpcParams = default){
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        foreach(var kvp in LobbyManager.Instance.playerSlotReadyState){
+            LobbySetCurrentReadyStateRpc(
+                new ReadyInfo{
+                    playerId = kvp.Key,
+                    readyState = kvp.Value
+                },
+                RpcTarget.Single(clientId, RpcTargetUse.Temp));
+        }
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    public void LobbySetCurrentReadyStateRpc(ReadyInfo _info, RpcParams rpcParams = default){
         LobbyManager.Instance.ConfigurePlayerSlot(_info);
     }
 

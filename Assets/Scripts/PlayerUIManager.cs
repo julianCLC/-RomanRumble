@@ -37,7 +37,6 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     void AddPlayerUI(ulong playerId){
-        Debug.Log("Adding player handler");
         // Instatiate playerUI prefab and add to layout group (set parent)
         GameObject newHandler = Instantiate(playerUIPrefab);
         newHandler.transform.SetParent(transform);
