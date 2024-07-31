@@ -121,7 +121,6 @@ public class NetworkHelperFuncs : NetworkBehaviour
 
     [Rpc(SendTo.Everyone)]
     public void StartGameRpc(){
-        Debug.Log("start game called");
         onGameStart?.Invoke();
     }
 

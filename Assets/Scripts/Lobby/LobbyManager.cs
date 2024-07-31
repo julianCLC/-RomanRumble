@@ -42,8 +42,6 @@ public class LobbyManager : MonoBehaviour
     }
 
     void OnJoinSession(){
-        Debug.Log("isServer: " + NetworkHelperFuncs.Instance.CheckIfServer());
-
         if(!NetworkHelperFuncs.Instance.CheckIfServer()){
             startGameButton.SetActive(false);
         }
@@ -61,9 +59,7 @@ public class LobbyManager : MonoBehaviour
         InitializePlayerSlots();
     }
 
-
     void OnLeaveSession(){
-        Debug.Log("LobbyManager.cs | OnLeaveSession");
         var playerSlotGOs = playerSlotGODict.Values;
         foreach(GameObject playerSlotGO in playerSlotGOs){
             Destroy(playerSlotGO);
@@ -91,7 +87,6 @@ public class LobbyManager : MonoBehaviour
     }
 
     void RemoveLobbyPlayerSLot(ulong playerId){
-        Debug.Log("Remove player slot call");
         GameObject playerSlotGO = playerSlotGODict[playerId];
         Destroy(playerSlotGO);
         playerSlotGODict.Remove(playerId);

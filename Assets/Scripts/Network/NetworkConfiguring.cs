@@ -77,7 +77,6 @@ public class NetworkConfiguring : MonoBehaviour
 
     public void DisconnectClient(){
         NetworkHelperFuncs.Instance.DisconnectClientRpc(NetworkManager.Singleton.LocalClientId);
-        Debug.Log("disconnect call");
         NetworkManager.Singleton.Shutdown();
     }
 

@@ -12,10 +12,7 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] NetworkConfiguring networkConfig;
     [SerializeField] TMP_Text joinCodeText;
     [SerializeField] TMP_InputField inputField;
-    // [SerializeField] GameObject NetworkButtons;
-    // [SerializeField] GameObject[] MainMenuButtons;
 
-    // public static Action onNetworkSubScribed;
     public static Action onStartAsHost;
     public static Action onDisconnect;
 
@@ -48,7 +45,6 @@ public class ConnectionManager : MonoBehaviour
 
     public void StartClient(){
         networkConfig.StartClient(inputField.text);
-        Debug.Log("StartClient()");
     }
 
     public void DisconnectClient(){

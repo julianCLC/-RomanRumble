@@ -20,7 +20,9 @@ public class GameManager : MonoBehaviour
     public static Action<ulong> onPlayerDeath;
     public static Action<ulong> onPlayerRevive;
 
-    // Use these to let other clients know of connection/disconnection
+    // connect/disconnect events coming from NetworkHelperFuncs.cs
+    // all other scripts should subscribe to these events
+    // for any functionality they need
     public static Action<ulong> onManualClientConnected;
     public static Action<ulong> onManualClientDisconnected;
     public static Action onJoinSession;
@@ -55,7 +57,6 @@ public class GameManager : MonoBehaviour
         NetworkHelperFuncs.onLeave += OnLeave;
         NetworkHelperFuncs.onClientJoin += OnClientConnect;
         NetworkHelperFuncs.onClientLeave += OnClientDisconnect;
-
     }
 
     void OnDisable(){
@@ -133,7 +134,6 @@ public class GameManager : MonoBehaviour
     }
 
     void OnLeave(ulong clientId){
-        Debug.Log("GameManager.cs | OnLeave()");
         if(playerObjects != null){ playerObjects.Clear(); }
         if(connectedPlayers != null){ connectedPlayers.Clear(); }
 
@@ -141,20 +141,20 @@ public class GameManager : MonoBehaviour
     }
 
     void UpdatePlayerObjects(){
-        // get all player objects
+        // Get all player objects
         GameObject[] tempPlayerObjects = GameObject.FindGameObjectsWithTag("Player");
         
-        // create connected client list
+        // Clear lists
         connectedPlayers.Clear();
         playerObjects.Clear();
+        playerObjectsDict.Clear();
+
+        // Populate lists and dictionaries
         foreach(GameObject playerObject in tempPlayerObjects){
             if(playerObject.TryGetComponent(out NetworkObject playerNO)){
                 connectedPlayers.Add(playerNO.OwnerClientId);
                 playerObjects.Add(playerObject);
-                if(!playerObjectsDict.ContainsKey(playerNO.OwnerClientId)){
-                    playerObjectsDict.Add(playerNO.OwnerClientId, playerObject);
-                }
-                Debug.Log("UpdatePlayerObjects() | connected player: " + playerNO.OwnerClientId);
+                playerObjectsDict.Add(playerNO.OwnerClientId, playerObject);
             }
         }
     }

@@ -93,14 +93,6 @@ public class PlayerControllerServer : NetworkBehaviour
         Debug.Log("server reverse pickup");
         pc.ReversePickup();
     }
-    //public void AllowPickupRpc(ulong itemPickupID, RpcParams rpcParams = default){
-    //    pc.ApprovedPickup(itemPickupID);
-    //}
-
-    // [Rpc(SendTo.SpecifiedInParams)]
-    // public void PreventPickupRpc(RpcParams rpcParams = default){
-        // pc.RejectedPickup();
-    // }
 
     // Reset animation layer of specific client for all
     [Rpc(SendTo.Everyone)]

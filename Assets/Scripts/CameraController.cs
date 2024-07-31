@@ -7,10 +7,7 @@ using System.Collections;
 public class CameraController : MonoBehaviour
 {
     [SerializeField] CinemachineVirtualCamera cmVirtualCam;
-    [SerializeField] CinemachineTargetGroup cmTargetGroup;
     [SerializeField] Transform cameraOrigin;
-    private Transform playerToFollow;
-    private Vector3 posToMove;
     List<Transform> playerList = new List<Transform>();
 
     [SerializeField] float smoothTime = 1f;
@@ -23,25 +20,25 @@ public class CameraController : MonoBehaviour
     bool isActive = false;
 
     void OnEnable(){
-        GameManager.onPlayerDeath += RemoveWeightFromTargetGroup;
-        GameManager.onPlayerRevive += AddWeightFromTargetGroup;
-
+        // Connections
         GameManager.onJoinSession += OnJoin;
         GameManager.onLeaveSession += OnLeave;
-
         GameManager.onManualClientConnected += AddTarget;
         GameManager.onManualClientDisconnected += RemoveTarget;
+
+        // Gameplay
+        GameManager.onPlayerDeath += RemoveWeightFromTargetGroup;
+        GameManager.onPlayerRevive += AddWeightFromTargetGroup;
     }
     
     void OnDisable(){
-        GameManager.onPlayerDeath -= RemoveWeightFromTargetGroup;
-        GameManager.onPlayerRevive -= AddWeightFromTargetGroup;
-
         GameManager.onJoinSession -= OnJoin;
         GameManager.onLeaveSession -= OnLeave;
-
         GameManager.onManualClientConnected -= AddTarget;
         GameManager.onManualClientDisconnected -= RemoveTarget;
+
+        GameManager.onPlayerDeath -= RemoveWeightFromTargetGroup;
+        GameManager.onPlayerRevive -= AddWeightFromTargetGroup;
     }
 
     void LateUpdate(){
@@ -56,6 +53,8 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    #region Connect/Disconnect functions
+
     void OnJoin(){
         InitializeTargetGroup();
     }
@@ -65,14 +64,7 @@ public class CameraController : MonoBehaviour
         isActive = false;
     }
 
-    /*
-    public void Initialize(Transform _player){
-        playerToFollow = _player;
-    }
-    */
-
     void InitializeTargetGroup(){
-        // playerList.Clear();
         foreach(GameObject playerObject in GameManager.Instance.playerObjects){
             playerList.Add(playerObject.transform);
         }
@@ -90,18 +82,20 @@ public class CameraController : MonoBehaviour
         playerList.Remove(playerObject.transform);
     }
 
+    #endregion
+
+    #region Gameplay functions
+
     public void RemoveWeightFromTargetGroup(ulong playerId){
-        // Transform playerTransform = GameManager.Instance.playerObjectDict[playerId].transform;
         GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
         playerList.Remove(playerObject.transform);
     }
 
     public void AddWeightFromTargetGroup(ulong playerId){
-        // Transform playerTransform = GameManager.Instance.playerObjDict[playerId].transform;
         GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
         playerList.Add(playerObject.transform);
     }
-    
+
     (Vector3, float) GetCenterPointAndGreatestDistance(){
         if(playerList.Count <= 0) return (Vector3.zero, minZoom);
         if(playerList.Count == 1){
@@ -120,4 +114,6 @@ public class CameraController : MonoBehaviour
 
         return (bounds.center, Mathf.Clamp(minZoom + newFov, minZoom, maxZoom));
     }
+
+    #endregion
 }
