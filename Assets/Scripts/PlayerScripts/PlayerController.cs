@@ -30,6 +30,9 @@ public class PlayerController : NetworkBehaviour
     float _chargeTimer = 0;
     [SerializeField] float maxChargeTime = 1.5f;
 
+    // item server functionality
+    bool _serverApprovedPickup = false;
+
     // states
     private bool _isGrounded;
     private bool _isHolding;
@@ -41,7 +44,7 @@ public class PlayerController : NetworkBehaviour
     public MoveState currState {private set; get;}
     
     // components
-    [SerializeField] CameraController cameraController;
+    //[SerializeField] CameraController cameraController;
     [SerializeField] CharacterController characterController;
     [SerializeField] CapsuleCollider capsuleCollider;
     [SerializeField] AnimatorEvents animatorEvents;
@@ -85,6 +88,7 @@ public class PlayerController : NetworkBehaviour
         }
         else{
             Initialize();
+            playerInput.enabled = false;
         }
         
     }
@@ -110,7 +114,7 @@ public class PlayerController : NetworkBehaviour
         
         // Configure Components
         characterController.enabled = true;
-        playerInput.enabled = true;
+        // playerInput.enabled = true;
         capsuleCollider.enabled = false;
         
         _isKeyboard = playerInput.currentControlScheme.Equals("Keyboard&Mouse"); 
@@ -120,8 +124,8 @@ public class PlayerController : NetworkBehaviour
 
         Debug.Log("my client id: " + OwnerClientId);
 
-        cameraController = GameObject.Find("CM vcam1").GetComponent<CameraController>();
-        cameraController.Initialize(transform);
+        // cameraController = GameObject.Find("CM vcam1").GetComponent<CameraController>();
+        // cameraController.Initialize(transform);
         
         playerIndicator.material.color = GameManager.Instance.GetColour(OwnerClientId);
     }
@@ -135,6 +139,7 @@ public class PlayerController : NetworkBehaviour
         if(!IsOwner) return;
         animatorEvents.onThrowCall += OnThrowHeld;
         animatorEvents.onPickupCall += OnPickupObject;
+        NetworkHelperFuncs.onGameStart += OnGameStart;
     }
 
     void RemoveListeners(){
@@ -144,6 +149,7 @@ public class PlayerController : NetworkBehaviour
         if(!IsOwner) return;
         animatorEvents.onThrowCall -= OnThrowHeld;
         animatorEvents.onPickupCall -= OnPickupObject;
+        NetworkHelperFuncs.onGameStart += OnGameStart;
     }
 
     // Update is called once per frame
@@ -325,23 +331,26 @@ public class PlayerController : NetworkBehaviour
         // Pickup Item
         if(!_isDead){
             if(!_isHolding && (currState == MoveState.Idle || currState == MoveState.Run)){
-                // check if in range of something
+                // check if any items in range
                 Collider[] hitColliders = Physics.OverlapBox(pickupArea.position, pickupArea.localScale/2f, Quaternion.identity, pickupMask, QueryTriggerInteraction.Ignore);
                 if(hitColliders.Length > 0){
                     float minDist = Mathf.Infinity;
+                    Collider closestCollider = null;
 
                     // get closest item            
                     foreach(Collider collider in hitColliders){
                         float dist = Vector3.Distance(collider.transform.position, transform.position);
                         if(dist < minDist){
                             minDist = dist;
-                            _itemHeld = collider.transform.GetComponent<PickupItem>();
-                            
+                            closestCollider = collider;
                         }
                     }
                     
-                    if(_itemHeld != null){
-                        _isHolding = true; 
+                    // start pickup
+                    if(closestCollider != null){
+                        _itemHeld = closestCollider.transform.GetComponent<PickupItem>();
+
+                        // play pickup animation
                         ChangeCurrentState(MoveState.Pickup, 0.333f);
                     }
                 }
@@ -445,18 +454,23 @@ public class PlayerController : NetworkBehaviour
     }
 
     public void OnPickupObject(){
+        
         if(_itemHeld != null && !_itemHeld.isItemHeld.Value){
+            _isHolding = true;
             pcserver.ItemPickupServerRpc(_itemHeld.NetworkObjectId);
             heldItem.ShowItemRpc(_itemHeld.NetworkObjectId);
             NetworkHelperFuncs.Instance.PlaySoundRPC("PickupSFX");
         }
         else{
             // invalid pickup
-            ReversePipckup();
+            _itemHeld.ClientSpawnRpc(); // ensure its spawned on all clients
+            ReversePickup();
         }
+        
     }
 
-    public void ReversePipckup(){
+    
+    public void ReversePickup(){
         Debug.Log("reverse pickup called");
         heldItem.HideItemRpc();
         _isHolding = false;
@@ -466,9 +480,10 @@ public class PlayerController : NetworkBehaviour
 
     IEnumerator PickupReverseDelay(){
         yield return new WaitForSeconds(0.5f);
-        animatorEvents.EndPickupOverride();
+        animatorEvents.ManualThrowCall();
         pcserver.ResetHandsRpc();
-    } 
+    }
+    
 
     #endregion
 
@@ -530,7 +545,30 @@ public class PlayerController : NetworkBehaviour
 
     #endregion
 
+    #region Server confirmation
+    /// <summary>
+    /// Server calls this function after confirming
+    /// that the item can be picked up
+    /// </summary>
+    public void ApprovedPickup(ulong itemPickupID){
+        NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(itemPickupID, out var itemToPickup);
+        if(itemToPickup != null){
+            _itemHeld = itemToPickup.GetComponent<PickupItem>();
+            _isHolding = true;
+            animatorEvents.ManualPickupCall();
+            heldItem.ShowItemRpc(itemPickupID);
+            NetworkHelperFuncs.Instance.PlaySoundRPC("PickupSFX");
+        }
+    }
+
+    #endregion
+
     #region OTHERS
+
+    void OnGameStart(){
+        if(!IsOwner) return;
+        playerInput.enabled = true;
+    }
 
     void OnPlayerDeath(ulong clientId){  
         if(clientId == OwnerClientId){
@@ -539,7 +577,7 @@ public class PlayerController : NetworkBehaviour
                     
                     _chargeTimer = 0;
                     OnThrowHeld();
-                    ReversePipckup();
+                    ResetValues();
                 }
 
                 if(_isCharging){ _isCharging = false; }
@@ -551,6 +589,13 @@ public class PlayerController : NetworkBehaviour
                 StartCoroutine(OtherPlayerDeathSequence());
             }
         }        
+    }
+
+    void ResetValues(){
+        heldItem.HideItemRpc();
+        _isHolding = false;
+        _itemHeld = null;
+        pcserver.ResetHandsRpc();
     }
 
     IEnumerator DeathSequence(){
@@ -665,6 +710,7 @@ public struct ThrowInfo : INetworkSerializable{
     public float chargePercent;
     public ulong objId;
 
+    /*
     public void Initialize(Vector3 origin, Vector3 dir, Quaternion rot, float chargePercent, ulong objId){
         this.origin = origin;
         this.dir = dir;
@@ -672,6 +718,7 @@ public struct ThrowInfo : INetworkSerializable{
         this.chargePercent = chargePercent;
         this.objId = objId;
     }
+    */
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {

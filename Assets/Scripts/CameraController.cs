@@ -23,23 +23,25 @@ public class CameraController : MonoBehaviour
     bool isActive = false;
 
     void OnEnable(){
-        GameManager.onPlayerObjectsUpdate += UpdateTargetGroup;
         GameManager.onPlayerDeath += RemoveWeightFromTargetGroup;
         GameManager.onPlayerRevive += AddWeightFromTargetGroup;
 
-        NetworkManager.Singleton.OnClientConnectedCallback += OnConnect;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnDisconnect;
+        GameManager.onJoinSession += OnJoin;
+        GameManager.onLeaveSession += OnLeave;
 
+        GameManager.onManualClientConnected += AddTarget;
+        GameManager.onManualClientDisconnected += RemoveTarget;
     }
     
-
     void OnDisable(){
-        GameManager.onPlayerObjectsUpdate -= UpdateTargetGroup;
         GameManager.onPlayerDeath -= RemoveWeightFromTargetGroup;
         GameManager.onPlayerRevive -= AddWeightFromTargetGroup;
 
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnConnect;
-        NetworkManager.Singleton.OnClientDisconnectCallback -= OnDisconnect;
+        GameManager.onJoinSession -= OnJoin;
+        GameManager.onLeaveSession -= OnLeave;
+
+        GameManager.onManualClientConnected -= AddTarget;
+        GameManager.onManualClientDisconnected -= RemoveTarget;
     }
 
     void LateUpdate(){
@@ -54,26 +56,50 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    void OnJoin(){
+        InitializeTargetGroup();
+    }
+
+    void OnLeave(){
+        playerList.Clear();
+        isActive = false;
+    }
+
+    /*
     public void Initialize(Transform _player){
         playerToFollow = _player;
     }
+    */
 
-    public void UpdateTargetGroup(ulong newPlayerId){
-        playerList.Clear();
-        foreach(GameObject player in GameManager.Instance.playerObjects){
-
-            playerList.Add(player.transform);
+    void InitializeTargetGroup(){
+        // playerList.Clear();
+        foreach(GameObject playerObject in GameManager.Instance.playerObjects){
+            playerList.Add(playerObject.transform);
         }
+
+        isActive = true;
+    }
+
+    void AddTarget(ulong playerId){
+        GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
+        playerList.Add(playerObject.transform);
+    }
+
+    void RemoveTarget(ulong playerId){
+        GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
+        playerList.Remove(playerObject.transform);
     }
 
     public void RemoveWeightFromTargetGroup(ulong playerId){
-        Transform playerTransform = GameManager.Instance.playerObjDict[playerId].transform;
-        playerList.Remove(playerTransform);
+        // Transform playerTransform = GameManager.Instance.playerObjectDict[playerId].transform;
+        GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
+        playerList.Remove(playerObject.transform);
     }
 
     public void AddWeightFromTargetGroup(ulong playerId){
-        Transform playerTransform = GameManager.Instance.playerObjDict[playerId].transform;
-        playerList.Add(playerTransform);
+        // Transform playerTransform = GameManager.Instance.playerObjDict[playerId].transform;
+        GameObject playerObject = GameManager.Instance.GetPlayerObjectByID(playerId);
+        playerList.Add(playerObject.transform);
     }
     
     (Vector3, float) GetCenterPointAndGreatestDistance(){
@@ -93,18 +119,5 @@ public class CameraController : MonoBehaviour
         float newFov = Mathf.Max(bounds.size.x, bounds.size.y);
 
         return (bounds.center, Mathf.Clamp(minZoom + newFov, minZoom, maxZoom));
-    }
-
-    void OnConnect(ulong clientId){
-        Debug.Log("OnConnect()");
-        if(clientId == NetworkManager.Singleton.LocalClientId){
-            isActive = true;
-        }
-    }
-
-    void OnDisconnect(ulong clientId){
-        if(clientId == NetworkManager.Singleton.LocalClientId){
-            isActive = false;
-        }
     }
 }

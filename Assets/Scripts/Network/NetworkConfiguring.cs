@@ -10,11 +10,16 @@ using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
 using System;
 
+
+
+/// <summary>
+/// Configuring unity relay transport
+/// also configues join code
+/// </summary>
 public class NetworkConfiguring : MonoBehaviour
 {
 
     public static event Action<string> onCreateHost;
-    public static event Action onMyClientConnected;
 
     // Start is called before the first frame update
     private async void Start()
@@ -34,7 +39,7 @@ public class NetworkConfiguring : MonoBehaviour
 
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
-            Debug.Log("Join Code");
+            Debug.Log("Join Code: " + joinCode);
 
             onCreateHost?.Invoke(joinCode);
 
@@ -71,17 +76,11 @@ public class NetworkConfiguring : MonoBehaviour
     }
 
     public void DisconnectClient(){
+        NetworkHelperFuncs.Instance.DisconnectClientRpc(NetworkManager.Singleton.LocalClientId);
         Debug.Log("disconnect call");
-        // NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
-        // if(!NetworkManager.Singleton.IsServer){
-
-        // }
         NetworkManager.Singleton.Shutdown();
     }
 
-    [Rpc(SendTo.Server)]
-    public void DisconnectClientRpc(ulong clientId){
-        //  NetworkManager.Singleton.Dest
-        NetworkManager.Singleton.DisconnectClient(clientId);
-    }
+    
+    
 }

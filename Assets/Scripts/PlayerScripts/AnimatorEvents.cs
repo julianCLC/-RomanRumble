@@ -18,9 +18,11 @@ public class AnimatorEvents : MonoBehaviour
         onPickupCall?.Invoke();
     }
 
-    public void EndPickupOverride(){
-        // reverse a pickup call;
-        Debug.Log("endpickup override");
+    public void ManualThrowCall(){
         onThrowCall?.Invoke();
+    }
+
+    public void ManualPickupCall(){
+        onPickupCall?.Invoke();
     }
 }

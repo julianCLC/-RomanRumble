@@ -18,7 +18,17 @@ public class SpearPivot : PickupItem
     public override MeshRenderer meshRenderer => mR;
     public override MeshFilter meshFilter => mF;
 
-    void Update(){ 
+    public NetworkVariable<Vector3> _velocity = new NetworkVariable<Vector3>();
+
+    void Update(){
+        
+        if(_velocity.Value.sqrMagnitude > 0){
+            // spearModel.up = _velocity.Value;
+            transform.forward = _velocity.Value;
+        }
+
+        if(!IsServer) return;
+
         if(inFlight){
             if(flightTimer > 0){
                 flightTimer -= Time.deltaTime;
@@ -31,8 +41,9 @@ public class SpearPivot : PickupItem
         if(rb.velocity.normalized != Vector3.zero){
             // transform.up = rb.velocity.normalized;
 
-            Vector3 forwardDir = rb.velocity.normalized;
-            transform.forward = forwardDir;
+            // Vector3 forwardDir = rb.velocity.normalized;
+            // transform.forward = forwardDir;
+            _velocity.Value = rb.velocity.normalized;
         }
     }
 

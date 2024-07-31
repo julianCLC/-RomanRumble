@@ -6,35 +6,25 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class StartNetwork : MonoBehaviour
+public class ConnectionManager : MonoBehaviour
 {
 
     [SerializeField] NetworkConfiguring networkConfig;
     [SerializeField] TMP_Text joinCodeText;
     [SerializeField] TMP_InputField inputField;
     // [SerializeField] GameObject NetworkButtons;
-    [SerializeField] GameObject[] MainMenuButtons;
+    // [SerializeField] GameObject[] MainMenuButtons;
 
     // public static Action onNetworkSubScribed;
     public static Action onStartAsHost;
+    public static Action onDisconnect;
 
     void OnEnable(){
         NetworkConfiguring.onCreateHost += HostConfigure;
-        StartCoroutine(SubscribeToNetworkManagerEvents());
-    }
-
-
-    IEnumerator SubscribeToNetworkManagerEvents(){
-        yield return new WaitUntil(() => NetworkManager.Singleton);
-        NetworkManager.Singleton.OnClientConnectedCallback += OnConnected;
-        // onNetworkSubScribed?.Invoke();
-        Debug.Log("Subscribed to NetworkManager");
-    
     }
 
     void OnDisable(){
         NetworkConfiguring.onCreateHost -= HostConfigure;
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnConnected;
     }
 
     void HostConfigure(string joinCode){
@@ -42,8 +32,10 @@ public class StartNetwork : MonoBehaviour
 
         SetJoinCode(joinCode);
         onStartAsHost?.Invoke();
+        
     }
     void SetJoinCode(string joinCode){
+        joinCodeText.gameObject.SetActive(true);
         joinCodeText.text = "Join Code: " + joinCode;
     }
 
@@ -56,24 +48,15 @@ public class StartNetwork : MonoBehaviour
 
     public void StartClient(){
         networkConfig.StartClient(inputField.text);
+        Debug.Log("StartClient()");
     }
 
     public void DisconnectClient(){
+        onDisconnect?.Invoke();
         networkConfig.DisconnectClient();
-        foreach(GameObject button in MainMenuButtons){
-            button.SetActive(true);
-        }
     }
 
     public void QuitGame(){
         Application.Quit();
     }
-
-    void OnConnected(ulong clientId){
-        // NetworkButtons.SetActive(false);
-        foreach(GameObject button in MainMenuButtons){
-            button.SetActive(false);
-        }
-    }
-    
 }

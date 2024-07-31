@@ -75,28 +75,37 @@ public class PlayerControllerServer : NetworkBehaviour
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(itemPickupID, out var itemToPickup);
         itemToPickup.TryGetComponent(out PickupItem itemScript);
 
-        // if item is already picked up, return
+        // if item is already picked up, return  
         if(itemToPickup == null || itemScript.isItemHeld.Value){
             ulong clientId = rpcParams.Receive.SenderClientId;
             ReversePickupRpc(RpcTarget.Single(clientId, RpcTargetUse.Temp));
             return;
-        } 
+        }
 
         itemScript.ServerPickup(OwnerClientId);
         itemScript.ClientDespawnRpc();
         
     }
 
-    // Tell client their pickup failed
+    // Let client proceed with pickup
     [Rpc(SendTo.SpecifiedInParams)]
     public void ReversePickupRpc(RpcParams rpcParams = default){
-        pc.ReversePipckup();
+        Debug.Log("server reverse pickup");
+        pc.ReversePickup();
     }
+    //public void AllowPickupRpc(ulong itemPickupID, RpcParams rpcParams = default){
+    //    pc.ApprovedPickup(itemPickupID);
+    //}
+
+    // [Rpc(SendTo.SpecifiedInParams)]
+    // public void PreventPickupRpc(RpcParams rpcParams = default){
+        // pc.RejectedPickup();
+    // }
 
     // Reset animation layer of specific client for all
     [Rpc(SendTo.Everyone)]
     public void ResetHandsRpc(RpcParams rpcParams = default){
-        animatorEvents.EndPickupOverride();
+        animatorEvents.ManualThrowCall();
     }
 
     [Rpc(SendTo.Server)]
@@ -130,7 +139,7 @@ public class PlayerControllerServer : NetworkBehaviour
     /// <param name="previous"></param>
     /// <param name="current"></param>
     void UpdateHealthUI(float previous, float current){
-        PlayerUIGroup.Instance.UpdateHealthUI(OwnerClientId, current / _healthScript.maxHealth);
+        PlayerUIManager.Instance.UpdateHealthUI(OwnerClientId, current / _healthScript.maxHealth);
     }
 
     /// <summary>

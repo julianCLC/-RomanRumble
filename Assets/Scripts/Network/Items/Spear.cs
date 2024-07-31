@@ -21,9 +21,9 @@ public class Spear : PickupItem
             }
         }
 
-        if(rb.velocity.normalized != Vector3.zero){
-            transform.up = rb.velocity.normalized;
-        }
+        //if(rb.velocity.normalized != Vector3.zero){
+            // transform.up = rb.velocity.normalized;
+        //}
     }
 
     public override void ServerThrow(ThrowInfo throwInfo)
@@ -60,6 +60,8 @@ public class Spear : PickupItem
         rb.useGravity = false;
         inFlight = true;
         flightTimer = flightTime * timerPercent; // flytime based on charge
+
+        transform.up = rb.velocity.normalized; // point in direction flying towards
     }
 
     void EndFlight(){

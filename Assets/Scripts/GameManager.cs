@@ -10,8 +10,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int _targetFPS = 60;
     [SerializeField] RoundHandler roundHandler;
     [SerializeField] GameObject roundStartButton;
-    public GameObject[] playerObjects {get; private set;}
-    public Dictionary<ulong, GameObject> playerObjDict {get; private set;}
+
+    Dictionary<ulong, GameObject> playerObjectsDict = new Dictionary<ulong, GameObject>();
+    public List<GameObject> playerObjects {get; private set;}
+    public List<ulong> connectedPlayers {get; private set;}
     public Dictionary<ulong, int> playerScore = new Dictionary<ulong, int>(); // TODO: make this live on server, and clients either synchronize values, or only request values
 
     public static Action<ulong> onPlayerObjectsUpdate;
@@ -21,6 +23,8 @@ public class GameManager : MonoBehaviour
     // Use these to let other clients know of connection/disconnection
     public static Action<ulong> onManualClientConnected;
     public static Action<ulong> onManualClientDisconnected;
+    public static Action onJoinSession;
+    public static Action onLeaveSession;
 
     public static GameManager Instance { get; private set; }
 
@@ -42,32 +46,28 @@ public class GameManager : MonoBehaviour
     }
 
     void OnEnable(){
-
-        if(playerObjDict != null) playerObjDict.Clear();
-        playerObjDict = new Dictionary<ulong, GameObject>();
-        
         RoundHandler.onRoundEnd += OnRoundEnd;
-        // NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerObjects;
-        // NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectRpc;
-        // NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerObjects;
-        // NetworkManager.Singleton.OnClientDisconnectCallback += DisconnectPlayerObject;
-        // NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectRpc;
+
         PlayerControllerServer.onPlayerDeath += OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive += OnPlayerRevive;
+
+        NetworkHelperFuncs.onJoin += OnJoin;
+        NetworkHelperFuncs.onLeave += OnLeave;
+        NetworkHelperFuncs.onClientJoin += OnClientConnect;
+        NetworkHelperFuncs.onClientLeave += OnClientDisconnect;
+
     }
 
     void OnDisable(){
-  
-        playerObjDict.Clear();
-
         RoundHandler.onRoundEnd -= OnRoundEnd;
-        // NetworkManager.Singleton.OnClientConnectedCallback -= UpdatePlayerObjects;
-        // NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectRpc;
-        // NetworkManager.Singleton.OnClientDisconnectCallback -= DisconnectPlayerObject;
-        // NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectRpc;
-        // NetworkManager.Singleton.OnClientDisconnectCallback -= UpdatePlayerObjects;
+
         PlayerControllerServer.onPlayerDeath -= OnPlayerDeath;
         PlayerControllerServer.onPlayerRevive -= OnPlayerRevive;
+
+        NetworkHelperFuncs.onJoin -= OnJoin;
+        NetworkHelperFuncs.onLeave -= OnLeave;
+        NetworkHelperFuncs.onClientJoin -= OnClientConnect;
+        NetworkHelperFuncs.onClientLeave -= OnClientDisconnect;
     }
 
     public void StartRound(){
@@ -76,27 +76,6 @@ public class GameManager : MonoBehaviour
 
     void OnRoundEnd(){
         roundStartButton.SetActive(true);
-    }
-
-    void DisconnectPlayerObject(ulong clientId){
-        if(NetworkManager.Singleton.IsServer){
-            playerObjDict[clientId].GetComponent<NetworkObject>().Despawn();
-        }
-        UpdatePlayerObjects(clientId);
-    }
-
-    void UpdatePlayerObjects(ulong clientId){
-        Debug.Log("UpdatePlayerObjects()");
-        playerObjects = GameObject.FindGameObjectsWithTag("Player");
-        playerObjDict.Clear();
-        foreach(GameObject playerObj in playerObjects){
-            if(playerObj.TryGetComponent(out NetworkObject netObj)){
-                playerObjDict[netObj.OwnerClientId] = playerObj;
-            }
-            // playerObjDict[playerObj.GetComponent<NetworkObject>().OwnerClientId] = playerObj;
-        }
-        Debug.Log("UpdatePlayerObjects() object count: " + playerObjects.Length);
-        onPlayerObjectsUpdate?.Invoke(clientId);
     }
 
     /// <summary>
@@ -109,14 +88,14 @@ public class GameManager : MonoBehaviour
         playerScore.TryGetValue(playerId, out var currScore);
         int newScore = currScore + 1;
         playerScore[playerId] = newScore;
-        PlayerUIGroup.Instance.UpdateScoreUI(playerId, newScore);
+        PlayerUIManager.Instance.UpdateScoreUI(playerId, newScore);
 
         return newScore;
     }
 
     public void PlayerSetScore(ulong playerId, int _score){
         playerScore[playerId] = _score;
-        PlayerUIGroup.Instance.UpdateScoreUI(playerId, _score);
+        PlayerUIManager.Instance.UpdateScoreUI(playerId, _score);
     }
 
     void OnPlayerDeath(Transform player){
@@ -136,13 +115,55 @@ public class GameManager : MonoBehaviour
     }
 
     public void OnClientConnect(ulong clientId){
-        UpdatePlayerObjects(clientId);
+        UpdatePlayerObjects();
+        onManualClientConnected?.Invoke(clientId);
     }
 
     public void OnClientDisconnect(ulong clientId){
-        Debug.Log("Client Disconnected!");
-        DisconnectPlayerObject(clientId);
+        UpdatePlayerObjects();
+        onManualClientDisconnected?.Invoke(clientId);
+    }
 
+    void OnJoin(ulong clientId){
+        if(playerObjects == null){ playerObjects = new List<GameObject>(); }
+        if(connectedPlayers == null){ connectedPlayers = new List<ulong>(); }
+        
+        UpdatePlayerObjects();
+        onJoinSession?.Invoke();
+    }
+
+    void OnLeave(ulong clientId){
+        Debug.Log("GameManager.cs | OnLeave()");
+        if(playerObjects != null){ playerObjects.Clear(); }
+        if(connectedPlayers != null){ connectedPlayers.Clear(); }
+
+        onLeaveSession?.Invoke();
+    }
+
+    void UpdatePlayerObjects(){
+        // get all player objects
+        GameObject[] tempPlayerObjects = GameObject.FindGameObjectsWithTag("Player");
+        
+        // create connected client list
+        connectedPlayers.Clear();
+        playerObjects.Clear();
+        foreach(GameObject playerObject in tempPlayerObjects){
+            if(playerObject.TryGetComponent(out NetworkObject playerNO)){
+                connectedPlayers.Add(playerNO.OwnerClientId);
+                playerObjects.Add(playerObject);
+                if(!playerObjectsDict.ContainsKey(playerNO.OwnerClientId)){
+                    playerObjectsDict.Add(playerNO.OwnerClientId, playerObject);
+                }
+                Debug.Log("UpdatePlayerObjects() | connected player: " + playerNO.OwnerClientId);
+            }
+        }
+    }
+
+    public GameObject GetPlayerObjectByID(ulong clientId){
+        if(playerObjectsDict.TryGetValue(clientId, out GameObject playerObject)){
+            return playerObject;
+        }
+        return null;
     }
 
 }
