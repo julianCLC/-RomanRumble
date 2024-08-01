@@ -18208,7 +18208,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cmVirtualCam: {fileID: 1241757639}
-  cmTargetGroup: {fileID: 221951704}
   cameraOrigin: {fileID: 1696276085}
   smoothTime: 1
   minZoom: 8
@@ -26976,7 +26975,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1097a6f031648854a975572534e9c36b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startGameButton: {fileID: 126148186}
+  startGameButton: {fileID: 126148188}
   playerSlotParent: {fileID: 1251355192}
   playerSlotPrefab: {fileID: 5693003437967200381, guid: 9249569bc45d1044898efa5d58139908,
     type: 3}

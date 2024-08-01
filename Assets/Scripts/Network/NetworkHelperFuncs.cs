@@ -56,10 +56,6 @@ public class NetworkHelperFuncs : NetworkBehaviour
         }
     }
 
-    public bool CheckIfServer(){
-        return IsServer;
-    }
-
     #region Gameplay
 
     [Rpc(SendTo.Everyone)]

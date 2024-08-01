@@ -5,12 +5,15 @@ using TreeEditor;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LobbyManager : MonoBehaviour
 {
-    [SerializeField] GameObject startGameButton;
+    [SerializeField] Button startGameButton;
     [SerializeField] GameObject playerSlotParent;
     [SerializeField] GameObject playerSlotPrefab;
+
+
 
     Dictionary<ulong, GameObject> playerSlotGODict = new Dictionary<ulong, GameObject>();
     public Dictionary<ulong, bool> playerSlotReadyState {get; private set;}
@@ -42,11 +45,13 @@ public class LobbyManager : MonoBehaviour
     }
 
     void OnJoinSession(){
-        if(!NetworkHelperFuncs.Instance.CheckIfServer()){
-            startGameButton.SetActive(false);
+        if(!NetworkManager.Singleton.IsServer){
+            startGameButton.gameObject.SetActive(false);
         }
         else{
-            startGameButton.SetActive(true);
+            startGameButton.gameObject.SetActive(true);
+            startGameButton.interactable = false;
+
             if(playerSlotReadyState == null){
                 playerSlotReadyState = new Dictionary<ulong, bool>();
             }
@@ -93,6 +98,8 @@ public class LobbyManager : MonoBehaviour
 
         if(!NetworkManager.Singleton.IsServer) return;
         playerSlotReadyState.Remove(playerId);
+
+        CanStartGame();
     }
 
     void InitializePlayerSlots(ulong playerId = 0){
@@ -113,6 +120,8 @@ public class LobbyManager : MonoBehaviour
         playerSlotReadyState[_info.playerId] = _info.readyState;
 
         NetworkHelperFuncs.Instance.LobbyUpdatePlayerReadyRpc(_info);
+
+        CanStartGame();
     }
 
     // Set player ready state locally
@@ -120,6 +129,17 @@ public class LobbyManager : MonoBehaviour
         if(playerSlotGODict[_info.playerId].TryGetComponent(out LobbyPlayerSlot playerSlot)){
             playerSlot.SetReadyState(_info.readyState);
         }
+    }
+
+    void CanStartGame(){
+        foreach(bool readyState in playerSlotReadyState.Values){
+            if(!readyState){
+                startGameButton.interactable = false;
+                return;
+            }
+        }
+
+        startGameButton.interactable = true;
     }
 }
 
@@ -131,16 +151,5 @@ public struct ReadyInfo : INetworkSerializable {
     {
         serializer.SerializeValue(ref playerId);
         serializer.SerializeValue(ref readyState);
-    }
-}
-
-public struct ReadyInfoAll : INetworkSerializable {
-    public ulong[] _keys;
-    public bool[] _values;
-
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-    {
-        serializer.SerializeValue(ref _keys);
-        serializer.SerializeValue(ref _values);
     }
 }

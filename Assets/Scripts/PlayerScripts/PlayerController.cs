@@ -139,7 +139,7 @@ public class PlayerController : NetworkBehaviour
         if(!IsOwner) return;
         animatorEvents.onThrowCall += OnThrowHeld;
         animatorEvents.onPickupCall += OnPickupObject;
-        NetworkHelperFuncs.onGameStart += OnGameStart;
+        GameManager.onGameStart += OnGameStart;
     }
 
     void RemoveListeners(){
@@ -149,7 +149,7 @@ public class PlayerController : NetworkBehaviour
         if(!IsOwner) return;
         animatorEvents.onThrowCall -= OnThrowHeld;
         animatorEvents.onPickupCall -= OnPickupObject;
-        NetworkHelperFuncs.onGameStart += OnGameStart;
+        GameManager.onGameStart += OnGameStart;
     }
 
     // Update is called once per frame

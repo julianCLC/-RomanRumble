@@ -28,6 +28,8 @@ public class GameManager : MonoBehaviour
     public static Action onJoinSession;
     public static Action onLeaveSession;
 
+    public static Action onGameStart;
+
     public static GameManager Instance { get; private set; }
 
     Color[] colorList = {Color.blue, Color.red, Color.green, Color.yellow, Color.black, Color.white};
@@ -57,6 +59,8 @@ public class GameManager : MonoBehaviour
         NetworkHelperFuncs.onLeave += OnLeave;
         NetworkHelperFuncs.onClientJoin += OnClientConnect;
         NetworkHelperFuncs.onClientLeave += OnClientDisconnect;
+
+        NetworkHelperFuncs.onGameStart += OnGameStart;
     }
 
     void OnDisable(){
@@ -69,6 +73,8 @@ public class GameManager : MonoBehaviour
         NetworkHelperFuncs.onLeave -= OnLeave;
         NetworkHelperFuncs.onClientJoin -= OnClientConnect;
         NetworkHelperFuncs.onClientLeave -= OnClientDisconnect;
+        
+        NetworkHelperFuncs.onGameStart -= OnGameStart;
     }
 
     public void StartRound(){
@@ -77,6 +83,10 @@ public class GameManager : MonoBehaviour
 
     void OnRoundEnd(){
         roundStartButton.SetActive(true);
+    }
+
+    void OnGameStart(){
+        onGameStart?.Invoke();
     }
 
     /// <summary>

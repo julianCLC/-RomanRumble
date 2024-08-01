@@ -10,16 +10,12 @@ public class MainMenuHandler : MonoBehaviour
     // [SerializeField] GameObject mainMenu;
     // [SerializeField] GameObject lobbyMenu;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
+    void OnEnable(){
+        GameManager.onGameStart += OnGameStart;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    void OnDisable(){
+        GameManager.onGameStart -= OnGameStart;
     }
 
     public void OpenMenu(GameObject menuToOpen){
@@ -39,5 +35,9 @@ public class MainMenuHandler : MonoBehaviour
                 
             }
         }
+    }
+
+    void OnGameStart(){
+        FocusOneMenu(null);
     }
 }
