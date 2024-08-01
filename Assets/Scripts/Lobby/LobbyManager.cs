@@ -9,10 +9,14 @@ using UnityEngine.UI;
 
 public class LobbyManager : MonoBehaviour
 {
-    [SerializeField] Button startGameButton;
     [SerializeField] GameObject playerSlotParent;
     [SerializeField] GameObject playerSlotPrefab;
-
+    [Header("UI Elements")]
+    [SerializeField] Button startGameButton;
+    [SerializeField] Sprite notReadySprite;
+    [SerializeField] Sprite readySprite;
+    [SerializeField] Sprite notReadyButtonSprite;
+    [SerializeField] Sprite readyButtonSprite;
 
 
     Dictionary<ulong, GameObject> playerSlotGODict = new Dictionary<ulong, GameObject>();
@@ -110,6 +114,15 @@ public class LobbyManager : MonoBehaviour
         // Get current ready states of players from server
         if(!NetworkManager.Singleton.IsServer){
             NetworkHelperFuncs.Instance.LobbyGetCurrentReadyStatesRpc();
+        }
+    }
+
+    public (Sprite, Sprite) GetReadySprite(bool isReady){
+        if(isReady){
+            return (readySprite, notReadyButtonSprite);
+        }
+        else{
+            return (notReadySprite, readyButtonSprite);
         }
     }
 

@@ -9,7 +9,10 @@ public class LobbyPlayerSlot : MonoBehaviour
 {
 
     [SerializeField] Button readyButton;
+    [SerializeField] TMP_Text readyButtonText;
     [SerializeField] TMP_Text readyText;
+    [SerializeField] Image background;
+    
     bool mySlot = false;
     bool isReady = false;
 
@@ -45,6 +48,19 @@ public class LobbyPlayerSlot : MonoBehaviour
         });
     }
 
+    void UpdateBackground(bool _ready){
+         (Sprite bgSprite, Sprite readySprite) = LobbyManager.Instance.GetReadySprite(_ready);
+        background.sprite = bgSprite;
+        readyButton.image.sprite = readySprite;
+        
+        if(_ready){
+            readyButtonText.text = "UNREADY";
+        }
+        else{
+            readyButtonText.text = "READY";
+        }
+    }
+
     public void SetReadyState(bool _ready){
         if(_ready){
             readyText.text = "READY";
@@ -52,6 +68,8 @@ public class LobbyPlayerSlot : MonoBehaviour
         else{
             readyText.text = "NOT READY";
         }
+
+        UpdateBackground(_ready);
     }
 
 }
