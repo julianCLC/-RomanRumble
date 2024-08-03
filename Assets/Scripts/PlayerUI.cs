@@ -35,7 +35,7 @@ public class PlayerUI : MonoBehaviour
     }
 
     public void UpdateScore(int newScore){
-        score.text = "Score: " + newScore;
+        score.text = "SCORE: " + newScore;
     }
 
     public void UpdateHealth(float newHealth){

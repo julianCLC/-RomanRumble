@@ -18,10 +18,12 @@ public class ConnectionManager : MonoBehaviour
 
     void OnEnable(){
         NetworkConfiguring.onCreateHost += HostConfigure;
+        NetworkHelperFuncs.onServerDisconnectClient += DisconnectClient;
     }
 
     void OnDisable(){
         NetworkConfiguring.onCreateHost -= HostConfigure;
+        NetworkHelperFuncs.onServerDisconnectClient -= DisconnectClient;
     }
 
     void HostConfigure(string joinCode){

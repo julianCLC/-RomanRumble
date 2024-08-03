@@ -16,7 +16,6 @@ public class GameManager : MonoBehaviour
     public List<ulong> connectedPlayers {get; private set;}
     public Dictionary<ulong, int> playerScore = new Dictionary<ulong, int>(); // TODO: make this live on server, and clients either synchronize values, or only request values
 
-    public static Action<ulong> onPlayerObjectsUpdate;
     public static Action<ulong> onPlayerDeath;
     public static Action<ulong> onPlayerRevive;
 

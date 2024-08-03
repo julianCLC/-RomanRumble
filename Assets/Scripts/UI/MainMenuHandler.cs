@@ -7,15 +7,17 @@ public class MainMenuHandler : MonoBehaviour
 {
     ConnectionManager connectionManagerScript;
     [SerializeField] GameObject[] allMenuGO;
-    // [SerializeField] GameObject mainMenu;
+    [SerializeField] GameObject mainMenu;
     // [SerializeField] GameObject lobbyMenu;
 
     void OnEnable(){
         GameManager.onGameStart += OnGameStart;
+        GameManager.onLeaveSession += OnLeaveGame;
     }
 
     void OnDisable(){
         GameManager.onGameStart -= OnGameStart;
+        GameManager.onLeaveSession -= OnLeaveGame;
     }
 
     public void OpenMenu(GameObject menuToOpen){
@@ -39,5 +41,9 @@ public class MainMenuHandler : MonoBehaviour
 
     void OnGameStart(){
         FocusOneMenu(null);
+    }
+
+    void OnLeaveGame(){
+        FocusOneMenu(mainMenu);
     }
 }

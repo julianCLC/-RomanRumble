@@ -12,19 +12,31 @@ public class LobbyPlayerSlot : MonoBehaviour
     [SerializeField] TMP_Text readyButtonText;
     [SerializeField] TMP_Text readyText;
     [SerializeField] Image background;
+    [Header("Name Display/Change Area")]
+    [SerializeField] TMP_InputField editNameInputField;
+    [SerializeField] TMP_Text displayName;
+    [SerializeField] Button changeNameButton;
+    [SerializeField] Sprite changeNameSprite;
+    [SerializeField] Sprite confirmNameSprite;
+    [SerializeField] Image buttonImage;
+
     
     bool mySlot = false;
     bool isReady = false;
+    bool isChangingName = false;
+    public string playerName {get; private set;}
 
     void OnEnable(){
         if(mySlot){
             readyButton.onClick.AddListener(ToggleReady);
+            changeNameButton.onClick.AddListener(OnChangeNameEvent);
         }
     }
 
     void OnDisable(){
         if(mySlot){
             readyButton.onClick.RemoveListener(ToggleReady);
+            changeNameButton.onClick.RemoveListener(OnChangeNameEvent);
         }
     }
 
@@ -33,9 +45,13 @@ public class LobbyPlayerSlot : MonoBehaviour
         if(mySlot){
             readyButton.gameObject.SetActive(true);
             readyButton.onClick.AddListener(ToggleReady);
+            changeNameButton.onClick.AddListener(OnChangeNameEvent);
+            playerName = "Solder";
         }
         else{
             readyButton.gameObject.SetActive(false);
+            changeNameButton.gameObject.SetActive(false);
+            editNameInputField.gameObject.SetActive(false);
         }
     }
 
@@ -49,7 +65,7 @@ public class LobbyPlayerSlot : MonoBehaviour
     }
 
     void UpdateBackground(bool _ready){
-         (Sprite bgSprite, Sprite readySprite) = LobbyManager.Instance.GetReadySprite(_ready);
+        (Sprite bgSprite, Sprite readySprite) = LobbyManager.Instance.GetReadySprite(_ready);
         background.sprite = bgSprite;
         readyButton.image.sprite = readySprite;
         
@@ -70,6 +86,40 @@ public class LobbyPlayerSlot : MonoBehaviour
         }
 
         UpdateBackground(_ready);
+    }
+
+    void UpdatePlayerName(string _name){
+        displayName.text = _name;
+    }
+
+    void OnChangeNameEvent(){
+        isChangingName = !isChangingName;
+
+        if(isChangingName){
+            OnChangeName();
+        }
+        else{
+            OnConfirmChangeName();
+        }
+    }
+
+    void OnChangeName(){
+        displayName.gameObject.SetActive(false);
+        editNameInputField.gameObject.SetActive(true);
+        buttonImage.sprite = confirmNameSprite;
+
+        editNameInputField.text = "";
+    }
+
+    void OnConfirmChangeName(){
+        displayName.gameObject.SetActive(true);
+        editNameInputField.gameObject.SetActive(false);
+        buttonImage.sprite = changeNameSprite;
+
+        playerName = editNameInputField.text;
+        UpdatePlayerName(playerName);
+
+        // let others know I changed name
     }
 
 }

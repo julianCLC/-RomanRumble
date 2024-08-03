@@ -20,6 +20,7 @@ public class NetworkHelperFuncs : NetworkBehaviour
     public static Action<ulong> onLeave; // I leave session
     public static Action<ulong> onClientJoin;
     public static Action<ulong> onClientLeave;
+    public static Action onServerDisconnectClient; // server calls disconnect on client
 
     bool subscribed = false;
 
@@ -104,16 +105,46 @@ public class NetworkHelperFuncs : NetworkBehaviour
     // Local Client Left
     void LeaveSession(){
         onLeave?.Invoke(NetworkManager.Singleton.LocalClientId);
+
+        if(subscribed){
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectRpc;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectRpc;
+            subscribed = false;
+        }
     }
 
+    // client calls this to get them disconnected
     [Rpc(SendTo.Server)]
     public void DisconnectClientRpc(ulong clientId){
-        NetworkManager.Singleton.DisconnectClient(clientId);
+        if(IsServer && NetworkManager.Singleton.LocalClientId == clientId){
+            // If host closes the server
+
+            // Disconnect all other clients
+            ServerDisconnectClientRpc();
+            /*
+            foreach(ulong _id in NetworkManager.Singleton.ConnectedClientsIds){
+                if(_id != NetworkManager.ServerClientId){
+                    NetworkManager.Singleton.DisconnectClient(_id);
+                }
+            }
+            */
+
+            // Shut down server
+            NetworkManager.Singleton.Shutdown();
+        }
+        else{
+            NetworkManager.Singleton.DisconnectClient(clientId);
+        }
+    }
+
+    [Rpc(SendTo.NotServer)]
+    public void ServerDisconnectClientRpc(){
+        onServerDisconnectClient?.Invoke();
     }
 
     #endregion
 
-    #region Lobby
+    #region Lobby ready states
 
     [Rpc(SendTo.Everyone)]
     public void StartGameRpc(){
@@ -123,8 +154,12 @@ public class NetworkHelperFuncs : NetworkBehaviour
     // Let server know my ready state
     [Rpc(SendTo.Server)]
     public void LobbySendReadyStateRpc(ReadyInfo _info){
-        // LobbyManager.Instance.ConfigurePlayerSlot(_info);
+
+        // Save ready states
         LobbyManager.Instance.ServerSetPlayerReadyState(_info);
+
+        // Update other clients
+        // LobbyUpdatePlayerReadyRpc(_info);
     }
 
     // Change ready state for all clients
@@ -152,6 +187,22 @@ public class NetworkHelperFuncs : NetworkBehaviour
     public void LobbySetCurrentReadyStateRpc(ReadyInfo _info, RpcParams rpcParams = default){
         LobbyManager.Instance.ConfigurePlayerSlot(_info);
     }
+
+    #endregion
+
+    #region Lobby display names
+
+    /*
+    [Rpc(SendTo.Server)]
+    public void LobbySendNewNameRpc(LobbySlotNameInfo _info){
+        LobbyManager.Instance.ServerSetPlayerName(_info);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void LobbyUpdatePlayerNameRpc(LobbySlotNameInfo _info){
+
+    }
+    */
 
     #endregion
 }

@@ -20,8 +20,9 @@ public class PlayerUIManager : MonoBehaviour
         } 
     }
 
+    /*
     void OnEnable(){
-        // GameManager.onPlayerObjectsUpdate += SetPlayerUIHandlers;
+        
         GameManager.onJoinSession += InitializePlayerUI;
         GameManager.onLeaveSession += ResetUIHandlers;
         GameManager.onManualClientConnected += AddPlayerUI;
@@ -29,12 +30,12 @@ public class PlayerUIManager : MonoBehaviour
     }
     
     void OnDisable(){
-        // GameManager.onPlayerObjectsUpdate -= SetPlayerUIHandlers;
         GameManager.onJoinSession -= InitializePlayerUI;
         GameManager.onLeaveSession -= ResetUIHandlers;
         GameManager.onManualClientConnected -= AddPlayerUI;
         GameManager.onManualClientDisconnected -= RemovePlayerUI;
     }
+    */
 
     void AddPlayerUI(ulong playerId){
         // Instatiate playerUI prefab and add to layout group (set parent)

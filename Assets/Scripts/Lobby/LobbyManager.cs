@@ -78,6 +78,7 @@ public class LobbyManager : MonoBehaviour
     }
 
     void AddLobbyPlayerSlot(ulong playerId){
+        Debug.Log("adding slot");
         // Instatiate playerUI prefab and add to layout group (set parent)
         GameObject newHandler = Instantiate(playerSlotPrefab);
         newHandler.transform.SetParent(playerSlotParent.transform);
@@ -107,7 +108,17 @@ public class LobbyManager : MonoBehaviour
     }
 
     void InitializePlayerSlots(ulong playerId = 0){
-        foreach( ulong id in GameManager.Instance.connectedPlayers){
+        if(NetworkManager.Singleton.IsServer){
+            string connectedList = "";
+            foreach(ulong id in GameManager.Instance.connectedPlayers){
+                connectedList += id + ", ";
+            }
+
+            Debug.Log("LobbyManager.cs | InitializePlayerSlots() | game manager connected players list: " + connectedList);
+        }
+
+
+        foreach(ulong id in GameManager.Instance.connectedPlayers){
             AddLobbyPlayerSlot(id);
         }
 
@@ -144,6 +155,19 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    /*
+    // Save player on server
+    public void ServerSetPlayerName(LobbySlotNameInfo _info){
+        if(!NetworkManager.Singleton.IsServer) return;
+        
+        playerSlotReadyState[_info.playerId] = _info.readyState;
+
+        NetworkHelperFuncs.Instance.LobbyUpdatePlayerReadyRpc(_info);
+
+        CanStartGame();
+    }
+    */
+
     void CanStartGame(){
         foreach(bool readyState in playerSlotReadyState.Values){
             if(!readyState){
@@ -164,5 +188,16 @@ public struct ReadyInfo : INetworkSerializable {
     {
         serializer.SerializeValue(ref playerId);
         serializer.SerializeValue(ref readyState);
+    }
+}
+
+public struct LobbySlotNameInfo : INetworkSerializable {
+    public ulong playerId;
+    public string playerName;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref playerId);
+        serializer.SerializeValue(ref playerName);
     }
 }

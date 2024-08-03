@@ -8594,6 +8594,7 @@ MonoBehaviour:
   allMenuGO:
   - {fileID: 2125419517}
   - {fileID: 1563010832}
+  mainMenu: {fileID: 2125419517}
 --- !u!4 &602138906 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 44a64c40a6b56b949a41dcf99bf0725d,
