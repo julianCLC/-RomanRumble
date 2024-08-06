@@ -176,3 +176,11 @@ public class GameManager : MonoBehaviour
     }
 
 }
+
+public struct PlayerInfo {
+    ulong clientId;
+    string playerName;
+    GameObject playerObj;
+    int score;
+    float health;
+}

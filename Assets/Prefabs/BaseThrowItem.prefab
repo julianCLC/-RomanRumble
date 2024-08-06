@@ -171,10 +171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnerPrefab: {fileID: 0}
-  rockDamage: 0
-  bombDamage: 0
-  spearDamage: 0
-  itemType: 0
+  itemType: 1
   isItemHeld:
     m_InternalValue: 0
 --- !u!114 &-491570170152323226

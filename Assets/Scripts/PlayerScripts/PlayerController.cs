@@ -26,7 +26,7 @@ public class PlayerController : NetworkBehaviour
     const float GRAVITY = -0.70f;
 
     // item interaction
-    PickupItem _itemHeld = null;
+    NetworkThrowable _itemHeld = null;
     float _chargeTimer = 0;
     [SerializeField] float maxChargeTime = 1.5f;
 
@@ -348,7 +348,7 @@ public class PlayerController : NetworkBehaviour
                     
                     // start pickup
                     if(closestCollider != null){
-                        _itemHeld = closestCollider.transform.GetComponent<PickupItem>();
+                        _itemHeld = closestCollider.transform.GetComponent<NetworkThrowable>();
 
                         // play pickup animation
                         ChangeCurrentState(MoveState.Pickup, 0.333f);
@@ -431,13 +431,22 @@ public class PlayerController : NetworkBehaviour
     /// These functions are called by an event in the animation
     /// for a seamless look
     /// </summary>
+    public void OnPickupObject(){
+        pcserver.ItemPickupRequestRpc(new PickupInfo{
+                    clientId = NetworkManager.Singleton.LocalClientId,
+                    objId = _itemHeld.NetworkObjectId
+                });
+    }
+
     public void OnThrowHeld(){
         if(_itemHeld != null){
+            
             float chargePercent = _chargeTimer / maxChargeTime;
             float chargePower = (chargePercent / 2) + 0.5f; // changes range from (0, 1) to (0.5, 1)
 
             pcserver.ItemDropServerRpc(
                 new ThrowInfo{
+                    clientId = NetworkManager.Singleton.LocalClientId,
                     origin = objectRoot.position,
                     dir = playerModel.forward * throwStrength * chargePower,
                     rot = objectRoot.rotation,
@@ -453,22 +462,17 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public void OnPickupObject(){
-        
-        if(_itemHeld != null && !_itemHeld.isItemHeld.Value){
-            _isHolding = true;
-            pcserver.ItemPickupServerRpc(_itemHeld.NetworkObjectId);
-            heldItem.ShowItemRpc(_itemHeld.NetworkObjectId);
-            NetworkHelperFuncs.Instance.PlaySoundRPC("PickupSFX");
-        }
-        else{
-            // invalid pickup
-            _itemHeld.ClientSpawnRpc(); // ensure its spawned on all clients
-            ReversePickup();
-        }
-        
+    // Server calls this when accepting the pickup call
+    public void OnAllowPickup(){
+        _isHolding = true;
+        heldItem.ShowItemRpc(_itemHeld.NetworkObjectId);
+        NetworkHelperFuncs.Instance.PlaySoundRPC("PickupSFX");
     }
 
+    // Server calls this when rejecting the pickup call
+    public void OnRejectPickup(){
+        ReversePickup();
+    }
     
     public void ReversePickup(){
         Debug.Log("reverse pickup called");
@@ -484,7 +488,6 @@ public class PlayerController : NetworkBehaviour
         pcserver.ResetHandsRpc();
     }
     
-
     #endregion
 
     #region ANIMATION and TIMERS
@@ -553,7 +556,7 @@ public class PlayerController : NetworkBehaviour
     public void ApprovedPickup(ulong itemPickupID){
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(itemPickupID, out var itemToPickup);
         if(itemToPickup != null){
-            _itemHeld = itemToPickup.GetComponent<PickupItem>();
+            _itemHeld = itemToPickup.GetComponent<ArenaItemThrowable>();
             _isHolding = true;
             animatorEvents.ManualPickupCall();
             heldItem.ShowItemRpc(itemPickupID);
@@ -703,29 +706,32 @@ public enum MoveState{
 }
 
 
-public struct ThrowInfo : INetworkSerializable{ 
+public struct ThrowInfo : INetworkSerializable{
+    public ulong clientId;
     public Vector3 origin;
     public Vector3 dir;
     public Quaternion rot;
     public float chargePercent;
     public ulong objId;
 
-    /*
-    public void Initialize(Vector3 origin, Vector3 dir, Quaternion rot, float chargePercent, ulong objId){
-        this.origin = origin;
-        this.dir = dir;
-        this.rot = rot;
-        this.chargePercent = chargePercent;
-        this.objId = objId;
-    }
-    */
-
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
+        serializer.SerializeValue(ref clientId);
         serializer.SerializeValue(ref origin);
         serializer.SerializeValue(ref dir);
         serializer.SerializeValue(ref rot);
         serializer.SerializeValue(ref chargePercent);
+        serializer.SerializeValue(ref objId);
+    }
+}
+
+public struct PickupInfo: INetworkSerializable{
+    public ulong clientId;
+    public ulong objId;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref clientId);
         serializer.SerializeValue(ref objId);
     }
 }

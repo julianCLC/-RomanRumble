@@ -4,20 +4,19 @@ using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody), typeof(NetworkTransform))]
-public class PickupItem : NetworkBehaviour
+[RequireComponent(typeof(Rigidbody))]
+public class ArenaItemThrowable : NetworkThrowable
 {
     public GameObject spawnerPrefab;
-    [SerializeField] public ItemType itemType;
+    // [SerializeField] public ItemType itemType;
     public virtual MeshRenderer meshRenderer {get; private set;}
     public virtual MeshFilter meshFilter {get; private set;}
     Collider[] itemColliders;
     protected Rigidbody rb;
-    public NetworkVariable<bool> isItemHeld = new NetworkVariable<bool>();
-    private ulong heldByClientId;
+    
+    // private ulong heldByClientId;
 
     float currentDamage;
-    float throwCharge;
 
     protected virtual void Awake(){
         itemColliders = GetComponents<Collider>();
@@ -30,23 +29,6 @@ public class PickupItem : NetworkBehaviour
 
     public override void OnNetworkSpawn(){
         base.OnNetworkSpawn();
-    }
-
-    [Rpc(SendTo.Everyone)]
-    public void ClientDespawnRpc(){
-        // Hide this gameobject on client
-        meshRenderer.enabled = false;
-        foreach(Collider collider in itemColliders){
-            collider.enabled = false;
-        }
-    }
-
-    [Rpc(SendTo.Everyone)]
-    public void ClientSpawnRpc(){
-        meshRenderer.enabled = true;
-        foreach(Collider collider in itemColliders){
-            collider.enabled = true;
-        }
     }
 
     /// <summary>
@@ -98,13 +80,15 @@ public class PickupItem : NetworkBehaviour
 
     protected virtual void OnHitEnvironment(Collision collision){ }
 
-    public void ServerPickup(ulong clientId){
+    public virtual void ServerPickup(ulong clientId){
         if(!IsServer) return;
         isItemHeld.Value = true;
         heldByClientId = clientId;
 
         rb.isKinematic = true;
         rb.interpolation = RigidbodyInterpolation.None;
+
+        ClientHideRpc();
     }
 
     public virtual void ServerThrow(ThrowInfo throwInfo){
@@ -118,5 +102,60 @@ public class PickupItem : NetworkBehaviour
         rb.rotation = throwInfo.rot;
 
         currentDamage = ItemUtils.Instance.GetItemStrength(itemType) * throwInfo.chargePercent;
+
+        ClientShowRpc();
+    }
+
+    // TODO: Find a new way to keep track of which player
+    // threw which item for score keeping
+    public override void Pickup(PickupInfo pickupInfo){
+        base.Pickup(pickupInfo);
+
+        // configure item
+        rb.isKinematic = true;
+        rb.interpolation = RigidbodyInterpolation.None;
+
+        // hide item from all clients
+        ClientHideRpc();
+
+        Debug.Log("ArenaItemThrowable.cs | Pickup()");
+        // return itemType;
+    }
+
+    public override void Throw(ThrowInfo throwInfo){
+        base.Throw(throwInfo);
+
+        rb.isKinematic = false;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        rb.position = throwInfo.origin;
+        rb.rotation = throwInfo.rot;
+
+        currentDamage = ItemUtils.Instance.GetItemStrength(itemType) * throwInfo.chargePercent;
+
+        ClientShowRpc();
+
+        Debug.Log("ArenaItemThrowable.cs | Throw()");
+    }
+
+    [Rpc(SendTo.Everyone)]
+    void ClientHideRpc(){
+        Debug.Log("ArenaItemThrowable.cs | ClientHideRpc()");
+
+        // Hide this gameobject on client
+        meshRenderer.enabled = false;
+        foreach(Collider collider in itemColliders){
+            collider.enabled = false;
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    void ClientShowRpc(){
+        Debug.Log("ArenaItemThrowable.cs | ClientShowRpc()");
+
+        meshRenderer.enabled = true;
+        foreach(Collider collider in itemColliders){
+            collider.enabled = true;
+        }
     }
 }

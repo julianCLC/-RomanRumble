@@ -8,56 +8,37 @@ using UnityEngine;
 /// </summary>
 public class PlayerHeldItems : NetworkBehaviour
 {
-    // PickupItem[] itemPrefabs;
-    // Dictionary<ItemType, int> itemDict = new Dictionary<ItemType, int>();
     [SerializeField] MeshRenderer meshRenderer;
     [SerializeField] MeshFilter meshFilter;
+    [SerializeField] GameObject heldPlayerGO;
 
     void Awake(){
         meshRenderer = GetComponent<MeshRenderer>();
         meshFilter = GetComponent<MeshFilter>();
-        // SetupHeldItem();
-    }
-
-    public override void OnNetworkSpawn(){
-        // base.OnNetworkSpawn();
-        // SetupHeldItem();
-    }
-
-    /// <summary>
-    /// Populate itemPrefabs and build the dictionary
-    /// </summary>
-    public void SetupHeldItem(){
-        /*
-        int children = transform.childCount;
-        itemPrefabs = new PickupItem[children];
-
-        for(int i = 0; i < transform.childCount; i++){
-            PickupItem pickupItem = transform.GetChild(i).GetComponent<PickupItem>();
-            pickupItem.DisableItem();
-            itemPrefabs[i] = pickupItem;
-            itemDict.Add(pickupItem.itemType, i);
-        }
-        */
     }
 
     [Rpc(SendTo.Everyone)]
-    // public void ShowItemRpc(MeshRenderer _meshRenderer, ItemType itemType){
     public void ShowItemRpc(ulong objectId){
         NetworkObject netObj = NetworkManager.SpawnManager.SpawnedObjects[objectId];
+        if(!netObj.gameObject.CompareTag("Player")){
+            if(netObj.TryGetComponent(out ArenaItemThrowable itemScript)){
+                meshFilter.mesh = itemScript.meshFilter.mesh;
+                meshRenderer.material = itemScript.meshRenderer.material;
+                transform.localScale = itemScript.transform.localScale;
+            }
 
-        if(netObj.TryGetComponent(out PickupItem itemScript)){
-            meshFilter.mesh = itemScript.meshFilter.mesh;
-            meshRenderer.material = itemScript.meshRenderer.material;
-            transform.localScale = itemScript.transform.localScale;
+            meshRenderer.enabled = true;
         }
-
-        meshRenderer.enabled = true;
+        else{
+            // picked up player
+            heldPlayerGO.SetActive(true);
+        }
     }
 
     [Rpc(SendTo.Everyone)]
     public void HideItemRpc(){
 
         meshRenderer.enabled = false;
+        heldPlayerGO.SetActive(false);
     }
 }

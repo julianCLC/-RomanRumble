@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class SpearPivot : PickupItem
+public class SpearPivot : ArenaItemThrowable
 {
     [SerializeField] Transform spearModel;
     const string FloorLayerName = "Floor";

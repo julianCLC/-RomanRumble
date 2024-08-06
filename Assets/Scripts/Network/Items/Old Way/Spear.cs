@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class Spear : PickupItem
+public class Spear : ArenaItemThrowable
 {
     const string FloorLayerName = "Floor";
     [SerializeField] BoxCollider spearTip;

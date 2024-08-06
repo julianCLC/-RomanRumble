@@ -41,8 +41,7 @@ public class PlayerControllerServer : NetworkBehaviour
         }
     }
 
-    public override void OnNetworkDespawn()
-    {
+    public override void OnNetworkDespawn(){
         base.OnNetworkDespawn();
 
         net_health.OnValueChanged -= UpdateHealthUI;
@@ -53,7 +52,6 @@ public class PlayerControllerServer : NetworkBehaviour
     }
 
     void InitializeOnServer(){
-        
         _healthScript.onDeath += OnPlayerDeathServer;
     }
 
@@ -70,28 +68,44 @@ public class PlayerControllerServer : NetworkBehaviour
         }
     }
 
+    // TODO: Finish this
+    // client sends pickup request
+    // server receives request, determines if client can pick it up
+    // if it can pick it up, send a pickup call to client
+    // if not, send a reject call to client
+
+    // server has to set state of item
     [Rpc(SendTo.Server)]
-    public void ItemPickupServerRpc(ulong itemPickupID, RpcParams rpcParams = default){
-        NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(itemPickupID, out var itemToPickup);
-        itemToPickup.TryGetComponent(out PickupItem itemScript);
+    public void ItemPickupRequestRpc(PickupInfo pickupInfo, RpcParams rpcParams = default){
+        // get item script
+        NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(pickupInfo.objId, out var itemToPickup);
+        itemToPickup.TryGetComponent(out NetworkThrowable itemScript);
+        ulong clientId = rpcParams.Receive.SenderClientId;
 
-        // if item is already picked up, return  
-        if(itemToPickup == null || itemScript.isItemHeld.Value){
-            ulong clientId = rpcParams.Receive.SenderClientId;
-            ReversePickupRpc(RpcTarget.Single(clientId, RpcTargetUse.Temp));
-            return;
+        // if item is already held or not
+        if(itemScript.CanPickUp()){
+            // accept pickup call
+
+            // pickup on server
+            itemScript.Pickup(pickupInfo);
+
+            // pickup on client 
+            ItemPickupAcceptRpc(RpcTarget.Single(pickupInfo.clientId, RpcTargetUse.Persistent));
         }
-
-        itemScript.ServerPickup(OwnerClientId);
-        itemScript.ClientDespawnRpc();
-        
+        else{
+            // reject pickup call
+            ItemPickupRejectRpc(RpcTarget.Single(clientId, RpcTargetUse.Persistent));
+        }
     }
 
-    // Let client proceed with pickup
     [Rpc(SendTo.SpecifiedInParams)]
-    public void ReversePickupRpc(RpcParams rpcParams = default){
-        Debug.Log("server reverse pickup");
-        pc.ReversePickup();
+    void ItemPickupAcceptRpc(RpcParams rpcParams = default){
+        pc.OnAllowPickup();
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    void ItemPickupRejectRpc(RpcParams rpcParams = default){
+        pc.OnRejectPickup();
     }
 
     // Reset animation layer of specific client for all
@@ -103,9 +117,9 @@ public class PlayerControllerServer : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void ItemDropServerRpc(ThrowInfo throwInfo){
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(throwInfo.objId, out var itemToPickup);
-        if (itemToPickup.TryGetComponent(out PickupItem itemScript)){
+        if (itemToPickup.TryGetComponent(out ArenaItemThrowable itemScript)){
             itemScript.ServerThrow(throwInfo);
-            itemScript.ClientSpawnRpc();
+            // itemScript.ClientShowRpc();
         }
     }
 

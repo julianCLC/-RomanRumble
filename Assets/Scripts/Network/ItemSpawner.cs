@@ -36,7 +36,7 @@ public class ItemSpawner : NetworkBehaviour
     // Spawn in world
     private NetworkObject SpawnItem(){
         NetworkObject obj = NetworkObjectPool.Singleton.GetNetworkObject(prefab, GameManager.GetRandomPositionArena(), Quaternion.identity);
-        PickupItem pickupItem = obj.transform.GetComponent<PickupItem>();
+        ArenaItemThrowable pickupItem = obj.transform.GetComponent<ArenaItemThrowable>();
         pickupItem.spawnerPrefab = prefab;
         obj.Spawn(true);
 

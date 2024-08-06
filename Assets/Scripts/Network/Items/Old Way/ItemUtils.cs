@@ -40,7 +40,9 @@ public class ItemUtils : MonoBehaviour
 }
 
 public enum ItemType{
+    None,
     Rock,
     Bomb,
-    Spear
+    Spear,
+    Player
 }
