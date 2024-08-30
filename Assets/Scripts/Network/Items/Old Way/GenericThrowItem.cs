@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class GenericThrowItem : ArenaItemThrowable
 {
-    public override void ServerThrow(ThrowInfo throwInfo)
+    public override void Throw(ThrowInfo throwInfo)
     {
-        base.ServerThrow(throwInfo);
+        base.Throw(throwInfo);
         rb.AddForce(throwInfo.dir, ForceMode.Impulse);
     }
 }

@@ -58,8 +58,8 @@ public class LobbyPlayerSlot : MonoBehaviour
     void ToggleReady(){
         isReady = !isReady;
         // call rpc
-        NetworkHelperFuncs.Instance.LobbySendReadyStateRpc(new ReadyInfo{
-            playerId = NetworkManager.Singleton.LocalClientId,
+        NetworkHelperFuncs.Instance.LobbySendReadyStateRpc(new LobbySlotReadyInfo{
+            clientId = NetworkManager.Singleton.LocalClientId,
             readyState = isReady
         });
     }
@@ -88,7 +88,7 @@ public class LobbyPlayerSlot : MonoBehaviour
         UpdateBackground(_ready);
     }
 
-    void UpdatePlayerName(string _name){
+    public void UpdatePlayerName(string _name){
         displayName.text = _name;
     }
 
@@ -96,14 +96,14 @@ public class LobbyPlayerSlot : MonoBehaviour
         isChangingName = !isChangingName;
 
         if(isChangingName){
-            OnChangeName();
+            OnChangeNameStart();
         }
         else{
             OnConfirmChangeName();
         }
     }
 
-    void OnChangeName(){
+    void OnChangeNameStart(){
         displayName.gameObject.SetActive(false);
         editNameInputField.gameObject.SetActive(true);
         buttonImage.sprite = confirmNameSprite;
@@ -120,6 +120,10 @@ public class LobbyPlayerSlot : MonoBehaviour
         UpdatePlayerName(playerName);
 
         // let others know I changed name
+        NetworkHelperFuncs.Instance.LobbySendNewNameRpc(new LobbySlotNameInfo{
+            clientId = NetworkManager.Singleton.LocalClientId,
+            playerName = playerName
+        });
     }
 
 }

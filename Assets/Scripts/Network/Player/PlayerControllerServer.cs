@@ -115,10 +115,12 @@ public class PlayerControllerServer : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server)]
-    public void ItemDropServerRpc(ThrowInfo throwInfo){
+    public void ItemThrowServerRpc(ThrowInfo throwInfo){
+        // get item script
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(throwInfo.objId, out var itemToPickup);
-        if (itemToPickup.TryGetComponent(out ArenaItemThrowable itemScript)){
-            itemScript.ServerThrow(throwInfo);
+
+        if (itemToPickup.TryGetComponent(out NetworkThrowable itemScript)){
+            itemScript.Throw(throwInfo);
             // itemScript.ClientShowRpc();
         }
     }
@@ -186,6 +188,11 @@ public class PlayerControllerServer : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     public void ShowMeshRpc(){
         pc.ShowMesh();
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void HideMeshRpc(){
+        pc.HideMesh();
     }
 
     /// <summary>

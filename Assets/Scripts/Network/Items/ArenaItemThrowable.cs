@@ -80,6 +80,7 @@ public class ArenaItemThrowable : NetworkThrowable
 
     protected virtual void OnHitEnvironment(Collision collision){ }
 
+/*
     public virtual void ServerPickup(ulong clientId){
         if(!IsServer) return;
         isItemHeld.Value = true;
@@ -105,6 +106,7 @@ public class ArenaItemThrowable : NetworkThrowable
 
         ClientShowRpc();
     }
+*/
 
     // TODO: Find a new way to keep track of which player
     // threw which item for score keeping

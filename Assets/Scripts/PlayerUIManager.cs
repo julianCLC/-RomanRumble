@@ -20,13 +20,14 @@ public class PlayerUIManager : MonoBehaviour
         } 
     }
 
-    /*
+    
     void OnEnable(){
         
         GameManager.onJoinSession += InitializePlayerUI;
         GameManager.onLeaveSession += ResetUIHandlers;
         GameManager.onManualClientConnected += AddPlayerUI;
         GameManager.onManualClientDisconnected += RemovePlayerUI;
+        GameManager.onGameStart += StartGame;
     }
     
     void OnDisable(){
@@ -34,8 +35,10 @@ public class PlayerUIManager : MonoBehaviour
         GameManager.onLeaveSession -= ResetUIHandlers;
         GameManager.onManualClientConnected -= AddPlayerUI;
         GameManager.onManualClientDisconnected -= RemovePlayerUI;
+
+        GameManager.onGameStart -= StartGame;
     }
-    */
+    
 
     void AddPlayerUI(ulong playerId){
         // Instatiate playerUI prefab and add to layout group (set parent)
@@ -48,6 +51,9 @@ public class PlayerUIManager : MonoBehaviour
 
         // Add to ui handlers list
         UIHandlers.Add(playerId, playerUI);
+
+        // Hide UI
+        newHandler.SetActive(false);
     }
 
     void RemovePlayerUI(ulong playerId){
@@ -95,6 +101,13 @@ public class PlayerUIManager : MonoBehaviour
     public void DisableUIHandlers(){
         foreach(Transform uiObj in transform){
             Destroy(uiObj.gameObject);
+        }
+    }
+
+    void StartGame(){
+        // Show UI
+        foreach(var ui in UIHandlers){
+            ui.Value.gameObject.SetActive(true);
         }
     }
 }

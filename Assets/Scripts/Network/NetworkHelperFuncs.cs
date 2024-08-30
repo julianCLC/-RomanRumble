@@ -118,16 +118,10 @@ public class NetworkHelperFuncs : NetworkBehaviour
     public void DisconnectClientRpc(ulong clientId){
         if(IsServer && NetworkManager.Singleton.LocalClientId == clientId){
             // If host closes the server
+            // TODO: host migration or timeout for other clients if the host disconnects
 
             // Disconnect all other clients
             ServerDisconnectClientRpc();
-            /*
-            foreach(ulong _id in NetworkManager.Singleton.ConnectedClientsIds){
-                if(_id != NetworkManager.ServerClientId){
-                    NetworkManager.Singleton.DisconnectClient(_id);
-                }
-            }
-            */
 
             // Shut down server
             NetworkManager.Singleton.Shutdown();
@@ -153,18 +147,18 @@ public class NetworkHelperFuncs : NetworkBehaviour
 
     // Let server know my ready state
     [Rpc(SendTo.Server)]
-    public void LobbySendReadyStateRpc(ReadyInfo _info){
+    public void LobbySendReadyStateRpc(LobbySlotReadyInfo _info){
 
         // Save ready states
         LobbyManager.Instance.ServerSetPlayerReadyState(_info);
 
         // Update other clients
-        // LobbyUpdatePlayerReadyRpc(_info);
+        LobbyUpdatePlayerReadyRpc(_info);
     }
 
     // Change ready state for all clients
     [Rpc(SendTo.Everyone)]
-    public void LobbyUpdatePlayerReadyRpc(ReadyInfo _info){
+    public void LobbyUpdatePlayerReadyRpc(LobbySlotReadyInfo _info){
         LobbyManager.Instance.ConfigurePlayerSlot(_info);
     }
 
@@ -175,8 +169,8 @@ public class NetworkHelperFuncs : NetworkBehaviour
 
         foreach(var kvp in LobbyManager.Instance.playerSlotReadyState){
             LobbySetCurrentReadyStateRpc(
-                new ReadyInfo{
-                    playerId = kvp.Key,
+                new LobbySlotReadyInfo{
+                    clientId = kvp.Key,
                     readyState = kvp.Value
                 },
                 RpcTarget.Single(clientId, RpcTargetUse.Temp));
@@ -184,7 +178,7 @@ public class NetworkHelperFuncs : NetworkBehaviour
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
-    public void LobbySetCurrentReadyStateRpc(ReadyInfo _info, RpcParams rpcParams = default){
+    public void LobbySetCurrentReadyStateRpc(LobbySlotReadyInfo _info, RpcParams rpcParams = default){
         LobbyManager.Instance.ConfigurePlayerSlot(_info);
     }
 
@@ -192,17 +186,42 @@ public class NetworkHelperFuncs : NetworkBehaviour
 
     #region Lobby display names
 
-    /*
     [Rpc(SendTo.Server)]
     public void LobbySendNewNameRpc(LobbySlotNameInfo _info){
+        // LobbyManager.Instance.ServerSetPlayerName(_info);
+
+        // Save names on game manager to be used by other scripts
         LobbyManager.Instance.ServerSetPlayerName(_info);
+
+        // call the update on other clients
+        LobbyUpdatePlayerNameRpc(_info);
     }
 
     [Rpc(SendTo.Everyone)]
-    public void LobbyUpdatePlayerNameRpc(LobbySlotNameInfo _info){
-
+    public void LobbyUpdatePlayerNameRpc(LobbySlotNameInfo _info, RpcParams rpcParams = default){
+        LobbyManager.Instance.ConfigurePlayerName(_info);
     }
-    */
+    
+    [Rpc(SendTo.Server)]
+    public void LobbyGetCurrentNamesRpc(RpcParams rpcParams = default){
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        foreach(var kvp in LobbyManager.Instance.playerSlotName){
+            LobbySetCurrentPlayerNameRpc(
+                new LobbySlotNameInfo{
+                    clientId = kvp.Key,
+                    playerName = kvp.Value
+                },
+                RpcTarget.Single(clientId, RpcTargetUse.Temp));
+        }
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    public void LobbySetCurrentPlayerNameRpc(LobbySlotNameInfo _info, RpcParams rpcParams = default){
+        LobbyManager.Instance.ConfigurePlayerName(_info);
+    }
+
+    // TODO: simplify updating of slots and names. maybe put all info in one
 
     #endregion
 }

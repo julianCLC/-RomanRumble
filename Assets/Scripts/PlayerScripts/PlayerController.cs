@@ -339,6 +339,7 @@ public class PlayerController : NetworkBehaviour
 
                     // get closest item            
                     foreach(Collider collider in hitColliders){
+                        if(collider.transform == transform) continue;
                         float dist = Vector3.Distance(collider.transform.position, transform.position);
                         if(dist < minDist){
                             minDist = dist;
@@ -444,7 +445,7 @@ public class PlayerController : NetworkBehaviour
             float chargePercent = _chargeTimer / maxChargeTime;
             float chargePower = (chargePercent / 2) + 0.5f; // changes range from (0, 1) to (0.5, 1)
 
-            pcserver.ItemDropServerRpc(
+            pcserver.ItemThrowServerRpc(
                 new ThrowInfo{
                     clientId = NetworkManager.Singleton.LocalClientId,
                     origin = objectRoot.position,
